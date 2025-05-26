@@ -86,7 +86,7 @@ export default function File() {
       setIsCheckingPayment(true);
       checkPaymentMutation.mutate();
     }
-  }, [fileId, user]);
+  }, [fileId, user, checkPaymentMutation]);
 
   // Vérifier le paiement si l'utilisateur revient après un paiement
   useEffect(() => {
