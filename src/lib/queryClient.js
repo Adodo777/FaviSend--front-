@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 // Configuration globale d'Axios
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3170", // Remplacez par l'URL de base de votre API
+  baseURL: "https://backend-favisend.onrender.com", // Remplacez par l'URL de base de votre API
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",

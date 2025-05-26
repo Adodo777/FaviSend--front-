@@ -180,7 +180,7 @@ export default function UploadForm({ onSuccess }) {
     try {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://localhost:3170/api/files/upload", true);
+        xhr.open("POST", "https://backend-favisend.onrender.com/api/files/upload", true);
 
         // Ajouter le token d'authentification dans les en-têtes
         const token = localStorage.getItem("authToken");
