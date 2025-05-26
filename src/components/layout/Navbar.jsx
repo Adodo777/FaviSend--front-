@@ -49,6 +49,9 @@ export default function Navbar() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuItem>
+                    <Link href="/profil">Profil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Link href="/dashboard">Tableau de bord</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

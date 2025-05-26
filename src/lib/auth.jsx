@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Fonction d'inscription
-  const register = async (username, email, password) => {
+  const register = async (username, email, password, firstName, lastName, phone) => {
     try {
       setIsLoading(true);
 
@@ -110,6 +110,9 @@ export const AuthProvider = ({ children }) => {
         username,
         email,
         password,
+        firstName,
+        lastName,
+        phone,
       });
 
       // Stocke le token et les données utilisateur

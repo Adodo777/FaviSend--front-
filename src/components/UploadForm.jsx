@@ -73,7 +73,7 @@ export default function UploadForm({ onSuccess }) {
   const saveMutation = useMutation({
     mutationFn: (data) => {
       const token = localStorage.getItem("authToken");
-      return apiRequest("POST", "http://localhost:3170/api/files/upload", data, {
+      return apiRequest("POST", "https://backend-favisend.onrender.com/api/files/upload", data, {
         Authorization: `Bearer ${token}`,
       });
     },

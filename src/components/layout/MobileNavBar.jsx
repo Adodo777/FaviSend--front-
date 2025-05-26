@@ -37,7 +37,7 @@ export default function MobileNavBar() {
       </Link>
       
       {user ? (
-        <Link href="/dashboard">
+        <Link href="/profil">
           <div className={`flex flex-col items-center ${location === '/profile' ? 'text-primary' : 'text-gray-500'}`}>
             <Icons.user className="text-xl" />
             <span className="text-xs">Profil</span>
