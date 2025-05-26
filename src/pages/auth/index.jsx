@@ -13,6 +13,9 @@ export default function AuthPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const { user, login, register, error: authError, isLoading: authLoading } = useAuth();
@@ -29,12 +32,12 @@ export default function AuthPage() {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!username || !password) {
       setError('Veuillez remplir tous les champs');
       return;
     }
-    
+
     try {
       await login(username, password);
       // La redirection sera gérée une fois que l'utilisateur est connecté
@@ -50,24 +53,24 @@ export default function AuthPage() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
-    if (!username || !email || !password || !confirmPassword) {
+
+    if (!username || !email || !password || !confirmPassword || !firstName || !lastName || !phone) {
       setError('Veuillez remplir tous les champs');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
-    
+
     if (password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
-    
+
     try {
-      await register(username, email, password);
+      await register(username, email, password, firstName, lastName, phone);
       // La redirection sera gérée une fois que l'utilisateur est connecté
     } catch (err) {
       if (err instanceof Error) {
@@ -97,20 +100,20 @@ export default function AuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error || authError && (
+            {error  && (
               <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md mb-4">
-                {error || authError.message}
+                {error}
               </div>
             )}
-            
+
             {isLogin ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username">Nom d'utilisateur</Label>
-                  <Input 
+                  <Input
                     id="username"
-                    type="text" 
-                    placeholder="votre_nom_utilisateur" 
+                    type="text"
+                    placeholder="votre_adress_mail"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -118,10 +121,10 @@ export default function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Mot de passe</Label>
-                  <Input 
+                  <Input
                     id="password"
-                    type="password" 
-                    placeholder="••••••••" 
+                    type="password"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -137,49 +140,89 @@ export default function AuthPage() {
             ) : (
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="first-name">Prénom</Label>
+                  <Input
+                    id="first-name"
+                    type="text"
+                    placeholder="Votre prénom"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="last-name">Nom</Label>
+                  <Input
+                    id="last-name"
+                    type="text"
+                    placeholder="Votre nom"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Ex: +229 97 00 00 00"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="register-username">Nom d'utilisateur</Label>
-                  <Input 
+                  <Input
                     id="register-username"
-                    type="text" 
-                    placeholder="votre_nom_utilisateur" 
+                    type="text"
+                    placeholder="votre_nom_utilisateur"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="register-email">Email</Label>
-                  <Input 
+                  <Input
                     id="register-email"
-                    type="email" 
-                    placeholder="vous@example.com" 
+                    type="email"
+                    placeholder="vous@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Mot de passe</Label>
-                  <Input 
+                  <Input
                     id="register-password"
-                    type="password" 
-                    placeholder="••••••••" 
+                    type="password"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-                  <Input 
+                  <Input
                     id="confirm-password"
-                    type="password" 
-                    placeholder="••••••••" 
+                    type="password"
+                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
                 </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -187,6 +230,7 @@ export default function AuthPage() {
                   S'inscrire
                 </Button>
               </form>
+
             )}
 
             <div className="relative my-6">

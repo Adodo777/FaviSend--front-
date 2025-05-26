@@ -24,7 +24,7 @@ async function throwIfResNotOk(error, url, method) {
   if (error.response) {
     const { status, data } = error.response;
     const message = data.message || error.message || "Une erreur s'est produite";
-    throw new Error(`${method} ${url} failed: ${status} - ${message}`);
+    throw new Error(`${message}`);
   } else {
     throw new Error(`${method} ${url} failed: ${error.message}`);
   }

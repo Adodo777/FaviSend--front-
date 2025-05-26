@@ -4,16 +4,17 @@ import { Icons } from "@/assets/icons";
 import { useLocation } from "wouter";
 import UserProfile from "@/components/UserProfil";
 import { useEffect } from "react";
+import { is } from "date-fns/locale";
 
 export default function Profile() {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const [, setLocation] = useLocation();
 
     useEffect(() => {
-        if (!user) {
+        if (!isLoading && !user) {
             setLocation("/auth");
         }
-    }, [user, setLocation]);
+    }, [isLoading, user, setLocation]);
 
     if (!user) {
         return (

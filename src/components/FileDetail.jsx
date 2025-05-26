@@ -50,7 +50,7 @@ export default function FileDetail({ file, onDownload, isDownloading, isPaid }) 
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/file/${file.shareUrl}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/file/${file.id}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

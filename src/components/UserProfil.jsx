@@ -1,30 +1,44 @@
-
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Icons } from "@/assets/icons";
-import { Button } from "@/components/ui/button";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Icons } from "@/assets/icons";
 
 const UserProfile = () => {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
+
+  // Vérification si `user` est défini
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Icons.loader className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const form = useForm({
     defaultValues: {
@@ -37,61 +51,63 @@ const UserProfile = () => {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (userData) => 
+    mutationFn: (userData) =>
       apiRequest("PUT", `/api/user/update/${user.id}`, userData),
-    onSuccess: (response) => {
-      response.json().then(data => {
-        updateUser(data); // Update the user in the auth context
-        queryClient.invalidateQueries({ queryKey: [`/api/user/update/${user.id}`] });
-        toast({
-          title: "Profil mis à jour",
-          description: "Vos informations ont été mises à jour avec succès.",
-        });
-        setIsEditing(false);
+    onSuccess: (data) => {
+      updateUser(data); // Met à jour l'utilisateur dans le contexte
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été mises à jour avec succès.",
       });
+      setIsEditing(false);
     },
     onError: (error) => {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: `Impossible de mettre à jour le profil: ${error}`,
+        description: `Impossible de mettre à jour le profil : ${error.message || error}`,
       });
-    }
+    },
   });
 
   const handleSubmit = (formData) => {
-    const userData = {
-      ...formData,
-      photoURL,
-    };
-    
-    updateProfileMutation.mutate(userData);
+    updateProfileMutation.mutate(formData);
   };
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const formData = new FormData();
     formData.append("photo", file);
 
-    // Upload photo to the server
-    const uploadMutation = apiRequest("POST", `/api/user/upload-photo/${user.id}`, formData);
-    uploadMutation.then(response => response.json())
-      .then(data => {
-        setPhotoURL(data.photoURL);
-        toast({
-          title: "Photo téléchargée",
-          description: "Votre photo de profil a été mise à jour.",
-        });
-      })
-      .catch(error => {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: `Impossible de télécharger la photo: ${error}`,
-        });
+    try {
+      const data = await apiRequest(
+        "POST",
+        `/api/user/upload-photo/${user.id}`,
+        formData,
+        {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        }
+      );
+
+      if (!data.photoURL) {
+        throw new Error("L'URL de la photo est manquante dans la réponse.");
+      }
+
+      setPhotoURL(data.photoURL);
+      toast({
+        title: "Photo téléchargée",
+        description: "Votre photo de profil a été mise à jour.",
       });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de télécharger la photo : ${error.message || error}`,
+      });
+    }
   };
 
   return (
@@ -104,17 +120,22 @@ const UserProfile = () => {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-6">
+          {/* Avatar et photo */}
           <div className="flex flex-col items-center">
             <Avatar className="h-24 w-24 mb-4">
               <AvatarImage src={photoURL || undefined} alt={user?.displayName || user?.username} />
               <AvatarFallback>
-                {user?.displayName?.charAt(0).toUpperCase() || 
-                 user?.username?.charAt(0).toUpperCase() || 'U'}
+                {user?.displayName?.charAt(0).toUpperCase() ||
+                  user?.username?.charAt(0).toUpperCase() ||
+                  "U"}
               </AvatarFallback>
             </Avatar>
             {isEditing && (
               <div>
-                <label htmlFor="profile-photo" className="block text-center text-sm font-medium text-gray-600 mb-2">
+                <label
+                  htmlFor="profile-photo"
+                  className="block text-center text-sm font-medium text-gray-600 mb-2"
+                >
                   Modifier la photo
                 </label>
                 <Input
@@ -137,7 +158,8 @@ const UserProfile = () => {
               )}
             </div>
           </div>
-          
+
+          {/* Formulaire */}
           <div className="flex-1">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -149,11 +171,7 @@ const UserProfile = () => {
                       <FormItem>
                         <FormLabel>Prénom</FormLabel>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            disabled={!isEditing} 
-                            placeholder="Votre prénom" 
-                          />
+                          <Input {...field} disabled={!isEditing} placeholder="Votre prénom" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -166,11 +184,7 @@ const UserProfile = () => {
                       <FormItem>
                         <FormLabel>Nom</FormLabel>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            disabled={!isEditing} 
-                            placeholder="Votre nom" 
-                          />
+                          <Input {...field} disabled={!isEditing} placeholder="Votre nom" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -185,10 +199,10 @@ const UserProfile = () => {
                     <FormItem>
                       <FormLabel>Nom d'affichage</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          disabled={!isEditing} 
-                          placeholder="Nom affiché publiquement" 
+                        <Input
+                          {...field}
+                          disabled={!isEditing}
+                          placeholder="Nom affiché publiquement"
                         />
                       </FormControl>
                       <FormMessage />
@@ -203,10 +217,10 @@ const UserProfile = () => {
                     <FormItem>
                       <FormLabel>Nom d'utilisateur</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          disabled={!isEditing || !!user?.username} 
-                          placeholder="Nom d'utilisateur unique" 
+                        <Input
+                          {...field}
+                          disabled={!isEditing || !!user?.username}
+                          placeholder="Nom d'utilisateur unique"
                         />
                       </FormControl>
                       <FormMessage />
@@ -221,11 +235,7 @@ const UserProfile = () => {
                     <FormItem>
                       <FormLabel>Téléphone</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          disabled={!isEditing} 
-                          placeholder="Votre numéro de téléphone" 
-                        />
+                        <Input {...field} disabled={!isEditing} placeholder="Votre numéro de téléphone" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -233,12 +243,8 @@ const UserProfile = () => {
                 />
 
                 {isEditing && (
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={updateProfileMutation.isPending}
-                  >
-                    {updateProfileMutation.isPending ? (
+                  <Button type="submit" className="w-full" disabled={updateProfileMutation.isLoading}>
+                    {updateProfileMutation.isLoading ? (
                       <>
                         <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
                         Mise à jour en cours...

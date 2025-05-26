@@ -10,6 +10,7 @@ const AuthContext = createContext({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  updateUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -144,7 +145,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
 
       // Appelle le backend pour la déconnexion
-      await apiRequest("POST", "/api/auth/logout");
 
       // Supprime le token et réinitialise l'utilisateur
       localStorage.removeItem("authToken");
@@ -172,6 +172,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // updateUser 
+  const updateUser = async (updatedData) => {
+    try {
+      setIsLoading(true);
+  
+      // Appelle le backend pour mettre à jour les informations utilisateur
+      const updatedUser = await apiRequest("PUT", "/api/auth/user", updatedData, {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      });
+  
+      // Met à jour l'état utilisateur
+      setUser(updatedUser);
+  
+      // Affiche un toast de succès
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été mises à jour avec succès.",
+      });
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour de l'utilisateur :", err);
+  
+      // Affiche un toast d'erreur
+      toast({
+        variant: "destructive",
+        title: "Échec de la mise à jour",
+        description: err.message || "Une erreur s'est produite lors de la mise à jour.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Valeurs fournies par le contexte
   const value = {
     user,
@@ -180,6 +212,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

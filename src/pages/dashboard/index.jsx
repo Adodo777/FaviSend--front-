@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icons } from "@/assets/icons";
@@ -8,6 +9,7 @@ import UploadForm from "@/components/UploadForm";
 import FilesList from "./FilesList";
 import Stats from "./Stats";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -17,8 +19,20 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // Requête pour récupérer les fichiers
+  const { data: files, isLoading: isFilesLoading } = useQuery({
+    queryKey: ["/api/files/user"],
+    queryFn: () => apiRequest("GET", "/api/files/user"),
+    enabled: !!user?.id,
+  });
+
+  // Calcul des statistiques
+  const totalDownloads = files?.reduce((sum, file) => sum + file.downloads, 0) || 0;
+  const totalEarnings = totalDownloads * 450;
+  const fileCount = files?.length || 0;
+
   useEffect(() => {
-    // Check if user is not authenticated and not loading
+    // Rediriger si l'utilisateur n'est pas authentifié
     if (!isLoading && !user) {
       toast({
         title: "Authentification requise",
@@ -28,7 +42,7 @@ export default function Dashboard() {
       setLocation("/");
     }
 
-    // Check for upload=true query parameter to show the upload form
+    // Vérifier si le paramètre "upload=true" est présent dans l'URL
     if (search.includes("upload=true")) {
       setShowUploadModal(true);
     }
@@ -43,7 +57,7 @@ export default function Dashboard() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isFilesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin">
@@ -72,15 +86,17 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm flex justify-between items-center font-medium text-muted-foreground">
                 Revenus totaux
+                <Icons.wallet className="inline-block ml-1 h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">0 FCFA</div>
+              <div className="text-2xl font-bold text-primary">{totalEarnings} FCFA</div>
               <p className="text-xs text-muted-foreground mt-1">
                 +0% par rapport au mois dernier
               </p>
@@ -88,12 +104,13 @@ export default function Dashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm flex justify-between items-center font-medium text-muted-foreground">
                 Téléchargements
+                <Icons.download className="inline-block ml-1 h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-secondary">0</div>
+              <div className="text-2xl font-bold text-secondary">{totalDownloads}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Sur l'ensemble de vos fichiers
               </p>
@@ -101,12 +118,13 @@ export default function Dashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm flex justify-between items-center font-medium text-muted-foreground">
                 Fichiers uploadés
+                <Icons.files className="inline-block ml-1 h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-accent">0</div>
+              <div className="text-2xl font-bold text-accent">{fileCount}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Vous pouvez uploader plus de fichiers
               </p>
@@ -114,6 +132,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Onglets */}
         <Tabs defaultValue="files" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="files" className="flex items-center">

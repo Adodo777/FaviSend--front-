@@ -10,7 +10,7 @@ export default function Stats() {
 
   const { data: files, isLoading } = useQuery({
     queryKey: ["/api/files/user"],
-    enabled: !!user?.uid,
+    enabled: !!user?.id,
   });
 
   const prepareChartData = (files) => {

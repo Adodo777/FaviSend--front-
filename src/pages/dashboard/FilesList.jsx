@@ -32,7 +32,7 @@ export default function FilesList() {
 
   const { data: files, isLoading } = useQuery({
     queryKey: ["/api/files/user"],
-    enabled: !!user?.uid,
+    enabled: !!user?.id,
   });
 
   const deleteFileMutation = useMutation({
@@ -54,10 +54,10 @@ export default function FilesList() {
     }
   });
 
-  const copyToClipboard = async (fileId, shareUrl) => {
+  const copyToClipboard = async (fileId) => {
     setCopyingId(fileId);
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/file/${shareUrl}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/file/${fileId}`);
       toast({
         title: "Lien copié!",
         description: "Le lien a été copié dans votre presse-papier.",
@@ -164,7 +164,7 @@ export default function FilesList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => copyToClipboard(file.id, file.shareUrl)}
+                      onClick={() => copyToClipboard(file.id)}
                     >
                       {copyingId === file.id ? (
                         <Icons.check className="h-4 w-4 text-green-500" />
@@ -179,7 +179,7 @@ export default function FilesList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => window.open(`/file/${file.shareUrl}`, '_blank')}>
+                        <DropdownMenuItem onClick={() => window.open(`/file/${file.id}`, '_blank')}>
                           <Icons.externalLink className="mr-2 h-4 w-4" />
                           Voir la page
                         </DropdownMenuItem>

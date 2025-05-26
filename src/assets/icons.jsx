@@ -40,7 +40,8 @@ import {
   Instagram,
   Linkedin,
   List as FileList,
-  Files
+  Files,
+  Pencil
 } from "lucide-react";
 
 export const Icons = {
@@ -94,5 +95,6 @@ export const Icons = {
   facebook: Facebook,
   twitter: Twitter,
   instagram: Instagram,
-  linkedin: Linkedin
+  linkedin: Linkedin,
+  pencil: Pencil,
 };
