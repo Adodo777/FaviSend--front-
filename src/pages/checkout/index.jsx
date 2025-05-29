@@ -1,0 +1,457 @@
+
+import { useState, useEffect } from "react"
+import { useQuery, useMutation } from "@tanstack/react-query"
+import { useAuth } from "@/lib/auth"
+import { useLocation } from "wouter"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { apiRequest } from "@/lib/queryClient"
+import { FileText, ImageIcon, Video, Music, Archive, ArrowLeft, CreditCard, User, UserX } from "lucide-react"
+import { Link } from "wouter"
+import { useForm } from "react-hook-form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+
+const getFileIcon = (fileType) => {
+  if (fileType.startsWith("image/")) return <ImageIcon className="h-8 w-8" />
+  if (fileType.startsWith("video/")) return <Video className="h-8 w-8" />
+  if (fileType.startsWith("audio/")) return <Music className="h-8 w-8" />
+  if (fileType.includes("zip") || fileType.includes("rar")) return <Archive className="h-8 w-8" />
+  return <FileText className="h-8 w-8" />
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 Bytes"
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
+
+const countries = [
+  "Burkina Faso",
+  "Côte d'Ivoire",
+  "Mali",
+  "Niger",
+  "Sénégal",
+  "Bénin",
+  "Togo",
+  "Guinée",
+  "Cameroun",
+  "Tchad",
+  "Gabon",
+  "République centrafricaine",
+  "Congo",
+  "République démocratique du Congo",
+]
+
+// Validation des champs
+const validateForm = (values) => {
+  const errors = {}
+
+  if (!values.firstName || values.firstName.length < 2) {
+    errors.firstName = "Le prénom doit contenir au moins 2 caractères"
+  }
+
+  if (!values.lastName || values.lastName.length < 2) {
+    errors.lastName = "Le nom doit contenir au moins 2 caractères"
+  }
+
+  if (!values.phoneNumber || values.phoneNumber.length < 8) {
+    errors.phoneNumber = "Le numéro de téléphone doit contenir au moins 8 chiffres"
+  }
+
+  if (!values.country) {
+    errors.country = "Veuillez sélectionner un pays"
+  }
+
+  if (!values.city || values.city.length < 2) {
+    errors.city = "La ville doit contenir au moins 2 caractères"
+  }
+
+  return errors
+}
+
+export default function CheckoutPage() {
+  const { user, isLoading: authLoading } = useAuth()
+  const [, navigate] = useLocation()
+  const { toast } = useToast()
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
+
+  // Récupérer l'ID du fichier depuis l'URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const fileId = urlParams.get("fileId")
+
+  const form = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      country: "",
+      city: "",
+    },
+  })
+
+  // Pré-remplir le formulaire si l'utilisateur est connecté
+  useEffect(() => {
+    if (user && !authLoading) {
+      const nameParts = user.displayName ? user.displayName.split(" ") : []
+      form.setValue("firstName", nameParts[0] || "")
+      form.setValue("lastName", nameParts.slice(1).join(" ") || "")
+
+      // Si l'utilisateur a des informations de profil, les utiliser
+      if (user.profile) {
+        form.setValue("phoneNumber", user.profile.phoneNumber || "")
+        form.setValue("country", user.profile.country || "")
+        form.setValue("city", user.profile.city || "")
+      }
+    }
+  }, [user, authLoading, form])
+
+  const {
+    data: file,
+    isLoading: fileLoading,
+    error,
+  } = useQuery({
+    queryKey: ["/api/files", fileId],
+    enabled: !!fileId,
+  })
+
+  const paymentMutation = useMutation({
+    mutationFn: async (values) => {
+      const response = await apiRequest("POST", "/api/payments/create", {
+        fileId: Number.parseInt(fileId),
+        ...values,
+        amount: 450,
+        paymentMethod: "mobileMoney",
+        userId: user?.id || null, // Inclure l'ID utilisateur si connecté
+        isGuestPurchase: !user, // Indiquer si c'est un achat invité
+      })
+      return response.json()
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Paiement initié",
+        description: "Vous allez être redirigé vers MoneyOO pour finaliser le paiement",
+      })
+
+      // Redirection vers Moneroo ou autre processeur de paiement
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl
+      } else {
+        // Simulation de redirection
+        setTimeout(() => {
+          if (user) {
+            navigate(`/purchases`)
+          } else {
+            navigate(`/purchase-confirmation?orderId=${data.orderId}`)
+          }
+        }, 2000)
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur de paiement",
+        description: error.message || "Une erreur est survenue lors du traitement du paiement",
+        variant: "destructive",
+      })
+    },
+  })
+
+  const onSubmit = async (values) => {
+    // Validation côté client
+    const errors = validateForm(values)
+    setFormErrors(errors)
+
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Erreurs dans le formulaire",
+        description: "Veuillez corriger les erreurs avant de continuer",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsProcessing(true)
+    try {
+      await paymentMutation.mutateAsync(values)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  if (fileLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!fileId || error || !file) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-red-600">Fichier introuvable</CardTitle>
+            <CardDescription>
+              Le fichier que vous souhaitez acheter n'existe pas ou n'est plus disponible
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link href="/explore">
+              <Button>Retour à l'exploration</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="container mx-auto max-w-4xl">
+        <div className="flex items-center gap-4 mb-8">
+          <Link href={`/file/${file.shareUrl}`}>
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Finaliser l'achat</h1>
+        </div>
+
+        {/* Statut de connexion */}
+        <div className="mb-6">
+          {authLoading ? (
+            <Alert>
+              <AlertDescription>Vérification du statut de connexion...</AlertDescription>
+            </Alert>
+          ) : user ? (
+            <Alert className="border-green-200 bg-green-50">
+              <User className="h-4 w-4" />
+              <AlertDescription className="text-green-800">
+                Connecté en tant que <strong>{user.displayName || user.username}</strong>
+                {" - "}
+                <Link href="/auth">
+                  <Button variant="link" className="p-0 h-auto text-green-700 underline">
+                    Changer de compte
+                  </Button>
+                </Link>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="border-blue-200 bg-blue-50">
+              <UserX className="h-4 w-4" />
+              <AlertDescription className="text-blue-800">
+                Vous effectuez un achat en tant qu'invité.{" "}
+                <Link href="/auth">
+                  <Button variant="link" className="p-0 h-auto text-blue-700 underline">
+                    Se connecter
+                  </Button>
+                </Link>{" "}
+                pour un suivi de vos achats.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Informations du produit */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                {getFileIcon(file.fileType)}
+                Résumé de votre commande
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg">{file.title}</h3>
+                <p className="text-gray-600 text-sm mt-1">{file.description || "Aucune description disponible"}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Nom du fichier:</span>
+                  <span className="font-medium">{file.fileName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Taille:</span>
+                  <span className="font-medium">{formatFileSize(file.fileSize)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Créateur:</span>
+                  <span className="font-medium">{file.user.displayName || file.user.username}</span>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center text-xl font-bold">
+                  <span>Total:</span>
+                  <span className="text-blue-600">450 CFA</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Paiement sécurisé via Mobile Money</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Formulaire de facturation */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <CreditCard className="h-6 w-6" />
+                Informations de facturation
+              </CardTitle>
+              <CardDescription>
+                {user
+                  ? "Vérifiez et complétez vos informations pour finaliser l'achat"
+                  : "Veuillez remplir vos informations pour finaliser l'achat"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Votre prénom"
+                              {...field}
+                              className={formErrors.firstName ? "border-red-500" : ""}
+                            />
+                          </FormControl>
+                          {formErrors.firstName && (
+                            <FormMessage className="text-red-500">{formErrors.firstName}</FormMessage>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Votre nom"
+                              {...field}
+                              className={formErrors.lastName ? "border-red-500" : ""}
+                            />
+                          </FormControl>
+                          {formErrors.lastName && (
+                            <FormMessage className="text-red-500">{formErrors.lastName}</FormMessage>
+                          )}
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Numéro de téléphone *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="+226 XX XX XX XX"
+                            {...field}
+                            className={formErrors.phoneNumber ? "border-red-500" : ""}
+                          />
+                        </FormControl>
+                        {formErrors.phoneNumber && (
+                          <FormMessage className="text-red-500">{formErrors.phoneNumber}</FormMessage>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pays *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className={formErrors.country ? "border-red-500" : ""}>
+                              <SelectValue placeholder="Sélectionnez votre pays" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {countries.map((country) => (
+                              <SelectItem key={country} value={country}>
+                                {country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {formErrors.country && <FormMessage className="text-red-500">{formErrors.country}</FormMessage>}
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ville *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Votre ville"
+                            {...field}
+                            className={formErrors.city ? "border-red-500" : ""}
+                          />
+                        </FormControl>
+                        {formErrors.city && <FormMessage className="text-red-500">{formErrors.city}</FormMessage>}
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium mb-1">Informations importantes :</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Tous les champs marqués d'un * sont obligatoires</li>
+                      <li>Vos informations sont sécurisées et ne seront pas partagées</li>
+                      <li>Le paiement est traité de manière sécurisée via Mobile Money</li>
+                      {!user && <li>En tant qu'invité, vous recevrez un lien de téléchargement par email</li>}
+                    </ul>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isProcessing || paymentMutation.isPending}>
+                    {isProcessing || paymentMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Traitement en cours...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Procéder au paiement (450 CFA)
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
