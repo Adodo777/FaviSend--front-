@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -25,6 +24,7 @@ export default function File() {
   const [hoverRating, setHoverRating] = useState(0);
   const [hasAccess, setHasAccess] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [paymentChecked, setPaymentChecked] = useState(false);
   const fileId = params?.id;
 
   // Vérifier si l'URL contient des paramètres de succès de paiement
@@ -37,69 +37,150 @@ export default function File() {
     enabled: !!fileId,
   });
 
-  // Mutation pour vérifier le paiement
-  const checkPaymentMutation = useMutation({
-    mutationFn: () => apiRequest("POST", `/api/purchase/verify`, {
-      fileId,
-      userId: user.id,
-    }),
-    onSuccess: (data) => {
-      setHasAccess(data.hasPaid);
-      setIsCheckingPayment(false);
-    },
-    onError: () => {
-      console.error("Erreur lors de la vérification du paiement");
+  // Fonction async pour vérifier le paiement
+  const checkPaymentStatus = useCallback(async () => {
+    if (!fileId || !user || paymentChecked) return;
+
+    setIsCheckingPayment(true);
+    
+    try {
+      const response = await apiRequest("POST", `/api/purchase/verify`, {
+        fileId,
+        userId: user.id,
+      });
+      
+      setHasAccess(response.hasPaid);
+      setPaymentChecked(true);
+    } catch (error) {
+      console.error("Erreur lors de la vérification du paiement:", error);
       setHasAccess(false);
-      setIsCheckingPayment(false);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de vérifier le statut du paiement.",
       });
+    } finally {
+      setIsCheckingPayment(false);
     }
-  });
+  }, [fileId, user, paymentChecked, toast]);
 
-  // Mutation pour initialiser un paiement
-  const initPaymentMutation = useMutation({
-    mutationFn: () => apiRequest("POST", `/api/purchase/init`, {
-      fileId,
-      userId: user.id,
-    }),
-    onSuccess: (data) => {
-      if (data.checkoutUrl) {
-        // Rediriger vers l'URL de paiement
-        window.location.href = data.checkoutUrl;
+  // Fonction async pour initialiser le paiement
+  const initializePayment = useCallback(async () => {
+    if (!fileId || !user) return;
+
+    try {
+      const response = await apiRequest("POST", `/api/purchase/init`, {
+        fileId,
+        userId: user.id,
+      });
+      
+      if (response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
       }
-    },
-    onError: () => {
+    } catch (error) {
+      console.error("Erreur lors de l'initialisation du paiement:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible d'initialiser le paiement.",
       });
     }
+  }, [fileId, user, toast]);
+
+  // Fonction async pour télécharger le fichier
+  const downloadFile = useCallback(async (fileShareUrl) => {
+    try {
+      const response = await apiRequest("POST", `/api/files/download/${fileShareUrl}`);
+      const data = await response.json();
+      
+      window.open(data.downloadUrl, "_blank");
+      queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] });
+      
+      toast({
+        title: "Téléchargement démarré",
+        description: "Votre fichier commence à se télécharger.",
+      });
+    } catch (error) {
+      console.error("Erreur lors du téléchargement:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de télécharger le fichier: ${error.message || error}`,
+      });
+    }
+  }, [fileId, toast]);
+
+  // Fonction async pour publier un commentaire
+  const publishComment = useCallback(async (commentData) => {
+    try {
+      await apiRequest("POST", `/api/files/comment`, commentData);
+      
+      queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] });
+      setComment("");
+      setRating(0);
+      
+      toast({
+        title: "Commentaire publié",
+        description: "Votre commentaire a été publié avec succès.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la publication du commentaire:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de publier le commentaire: ${error.message || error}`,
+      });
+    }
+  }, [fileId, toast]);
+
+  // Mutations avec gestion d'erreur améliorée
+  const downloadMutation = useMutation({
+    mutationFn: downloadFile,
+    onError: (error) => {
+      console.error("Mutation download error:", error);
+    }
+  });
+
+  const initPaymentMutation = useMutation({
+    mutationFn: initializePayment,
+    onError: (error) => {
+      console.error("Mutation payment error:", error);
+    }
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: publishComment,
+    onError: (error) => {
+      console.error("Mutation comment error:", error);
+    }
   });
 
   // Vérifier le paiement au chargement du composant
   useEffect(() => {
-    if (fileId && user) {
-      setIsCheckingPayment(true);
-      checkPaymentMutation.mutate();
+    if (fileId && user && !paymentChecked) {
+      checkPaymentStatus();
     }
-  }, [fileId, user]);
+  }, [fileId, user, paymentChecked, checkPaymentStatus]);
 
   // Vérifier le paiement si l'utilisateur revient après un paiement
   useEffect(() => {
-    if (paymentSuccess === 'true' && paymentSessionId && fileId) {
-      setIsCheckingPayment(true);
-      checkPaymentMutation.mutate();
+    if (paymentSuccess === 'true' && paymentSessionId && fileId && user) {
+      // Reset payment check status pour forcer une nouvelle vérification
+      setPaymentChecked(false);
+      setHasAccess(false);
       
       // Nettoyer l'URL pour enlever les paramètres de paiement
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
+      
+      // Vérifier le paiement après un court délai
+      setTimeout(() => {
+        checkPaymentStatus();
+      }, 500);
     }
-  }, [paymentSuccess, paymentSessionId, fileId]);
+  }, [paymentSuccess, paymentSessionId, fileId, user, checkPaymentStatus]);
 
+  // Gestion des erreurs de fichier
   useEffect(() => {
     if (error) {
       toast({
@@ -111,60 +192,16 @@ export default function File() {
     }
   }, [error, toast, setLocation]);
 
-  const downloadMutation = useMutation({
-    mutationFn: (fileShareUrl) => 
-      apiRequest("POST", `/api/files/download/${fileShareUrl}`),
-    onSuccess: (response) => {
-      response.json().then(data => {
-        // Redirect to actual file URL for download
-        window.open(data.downloadUrl, "_blank");
-        queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] });
-        toast({
-          title: "Téléchargement démarré",
-          description: "Votre fichier commence à se télécharger.",
-        });
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: `Impossible de télécharger le fichier: ${error}`,
-      });
-    }
-  });
-
-  const commentMutation = useMutation({
-    mutationFn: (data) => 
-      apiRequest("POST", `/api/files/comment`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] });
-      setComment("");
-      setRating(0);
-      toast({
-        title: "Commentaire publié",
-        description: "Votre commentaire a été publié avec succès.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: `Impossible de publier le commentaire: ${error}`,
-      });
-    }
-  });
-
-  const handleDownload = () => {
+  const handleDownload = useCallback(async () => {
     if (!fileData) return;
     
     if (user) {
       if (hasAccess) {
         // L'utilisateur a déjà payé, téléchargement direct
-        downloadMutation.mutate(fileData.shareUrl);
+        await downloadMutation.mutateAsync(fileData.shareUrl);
       } else {
         // L'utilisateur doit payer
-        initPaymentMutation.mutate();
+        await initPaymentMutation.mutateAsync();
       }
     } else {
       // Rediriger vers la page d'authentification
@@ -174,14 +211,14 @@ export default function File() {
       });
       setLocation("/auth");
     }
-  };
+  }, [fileData, user, hasAccess, downloadMutation, initPaymentMutation, toast, setLocation]);
 
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!fileData || !comment.trim() || rating === 0) return;
     
     if (user) {
-      commentMutation.mutate({
+      await commentMutation.mutateAsync({
         fileId: fileData.id,
         comment: comment.trim(),
         rating
@@ -194,19 +231,26 @@ export default function File() {
       });
       setLocation("/auth");
     }
-  };
+  }, [fileData, comment, rating, user, commentMutation, toast, setLocation]);
 
+  // Loading state optimisé pour mobile
   if (isLoading) {
     return (
       <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin">
-          <Icons.loader className="h-12 w-12 text-primary" />
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin">
+            <Icons.loader className="h-8 w-8 text-primary" />
+          </div>
+          <p className="text-sm text-gray-600">Chargement du fichier...</p>
         </div>
       </div>
     );
   }
 
   if (!fileData) return null;
+
+  // État de chargement pour les vérifications de paiement
+  const isLoadingPayment = isCheckingPayment || downloadMutation.isPending || initPaymentMutation.isPending;
 
   return (
     <div className="pt-20 pb-16 bg-gray-50 min-h-screen">
@@ -223,10 +267,22 @@ export default function File() {
           <FileDetail 
             file={fileData} 
             onDownload={handleDownload} 
-            isDownloading={downloadMutation.isPending || initPaymentMutation.isPending || isCheckingPayment} 
+            isDownloading={isLoadingPayment}
             isPaid={hasAccess}
           />
         </div>
+
+        {/* Indicateur de vérification de paiement */}
+        {isCheckingPayment && (
+          <Card className="mb-4 border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <Icons.loader className="h-5 w-5 animate-spin text-blue-600" />
+                <p className="text-sm text-blue-800">Vérification de votre accès en cours...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Comments section */}
         <div className="mt-12">
@@ -244,15 +300,15 @@ export default function File() {
                         <button
                           key={star}
                           type="button"
-                          className="focus:outline-none"
+                          className="focus:outline-none p-1" // Ajout de padding pour mobile
                           onMouseEnter={() => setHoverRating(star)}
                           onMouseLeave={() => setHoverRating(0)}
                           onClick={() => setRating(star)}
                         >
                           {(hoverRating || rating) >= star ? (
-                            <Icons.starFill className="h-6 w-6 text-yellow-400" />
+                            <Icons.starFill className="h-5 w-5 text-yellow-400" />
                           ) : (
-                            <Icons.star className="h-6 w-6 text-gray-300" />
+                            <Icons.star className="h-5 w-5 text-gray-300" />
                           )}
                         </button>
                       ))}
@@ -295,14 +351,14 @@ export default function File() {
                 <Card key={comment.id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start">
-                      <Avatar className="h-10 w-10 mr-3">
+                      <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
                         <AvatarImage src={comment.user.photoURL || undefined} alt={comment.user.displayName} />
                         <AvatarFallback>{comment.user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-sm">{comment.user.displayName}</h4>
-                          <span className="text-xs text-gray-500">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <h4 className="font-medium text-sm truncate">{comment.user.displayName}</h4>
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: fr })}
                           </span>
                         </div>
@@ -314,7 +370,7 @@ export default function File() {
                             />
                           ))}
                         </div>
-                        <p className="text-gray-700 text-sm">{comment.comment}</p>
+                        <p className="text-gray-700 text-sm break-words">{comment.comment}</p>
                       </div>
                     </div>
                   </CardContent>
