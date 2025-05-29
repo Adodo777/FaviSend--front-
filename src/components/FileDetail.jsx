@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export default function FileDetail({ file, onDownload, isDownloading, isPaid }) {
+export default function FileDetail({ file, onCheckout }) {
   const [copied, setCopied] = useState(false);
 
   const getFileIcon = (fileType) => {
@@ -36,14 +36,6 @@ export default function FileDetail({ file, onDownload, isDownloading, isPaid }) 
     if (fileType.includes('word') || fileType.includes('document')) 
       return 'bg-blue-50';
     return 'bg-gray-50';
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
@@ -141,22 +133,12 @@ export default function FileDetail({ file, onDownload, isDownloading, isPaid }) 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mt-6">
               <Button 
-                className="flex-1"
+                className="flex-1 sm:py-2"
                 size="lg"
-                onClick={onDownload}
-                disabled={isDownloading}
+                onClick={onCheckout}
               >
-                {isDownloading ? (
-                  <>
-                    <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
-                    Téléchargement...
-                  </>
-                ) : (
-                  <>
-                    <Icons.download className="mr-2 h-5 w-5" />
-                    {isPaid ? "Télécharger" : "Acheter et télécharger"}
-                  </>
-                )}
+                  <Icons.download className="mr-2 h-5 w-5" />
+                  Acheter et télécharger   
               </Button>
               
               <Button

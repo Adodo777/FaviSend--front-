@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, set } from "date-fns"
 import { fr } from "date-fns/locale"
 import FileDetail from "@/components/FileDetail"
 
@@ -34,32 +34,6 @@ export default function File() {
     queryKey: [`/api/files/detail/${fileId}`],
     enabled: !!fileId,
   })
-
-  // Fonction async pour télécharger le fichier
-  const downloadFile = useCallback(
-    async (fileShareUrl) => {
-      try {
-        const response = await apiRequest("POST", `/api/files/download/${fileShareUrl}`)
-        const data = await response.json()
-
-        window.open(data.downloadUrl, "_blank")
-        queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] })
-
-        toast({
-          title: "Téléchargement démarré",
-          description: "Votre fichier commence à se télécharger.",
-        })
-      } catch (error) {
-        console.error("Erreur lors du téléchargement:", error)
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: `Impossible de télécharger le fichier: ${error.message || error}`,
-        })
-      }
-    },
-    [fileId, toast],
-  )
 
   // Fonction async pour publier un commentaire
   const publishComment = useCallback(
@@ -87,14 +61,6 @@ export default function File() {
     [fileId, toast],
   )
 
-  // Mutations avec gestion d'erreur améliorée
-  const downloadMutation = useMutation({
-    mutationFn: downloadFile,
-    onError: (error) => {
-      console.error("Mutation download error:", error)
-    },
-  })
-
   const commentMutation = useMutation({
     mutationFn: publishComment,
     onError: (error) => {
@@ -114,21 +80,10 @@ export default function File() {
     }
   }, [error, toast, setLocation])
 
-  const handleDownload = useCallback(async () => {
-    if (!fileData) return
-
-    if (user) {
-      // Téléchargement direct sans vérification de paiement
-      await downloadMutation.mutateAsync(fileData.shareUrl)
-    } else {
-      // Rediriger vers la page d'authentification
-      toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour télécharger ce fichier.",
-      })
-      setLocation("/auth")
-    }
-  }, [fileData, user, downloadMutation, toast, setLocation])
+  // fonction pour rediriger vers le checkout
+  const handleCheckout = useCallback(() => {
+    setLocation(`/checkout/${fileId}`)
+  }, [fileId, setLocation])
 
   const handleCommentSubmit = useCallback(
     async (e) => {
@@ -179,9 +134,7 @@ export default function File() {
 
           <FileDetail
             file={fileData}
-            onDownload={handleDownload}
-            isDownloading={downloadMutation.isPending}
-            isPaid={true} // Toujours considéré comme payé puisque la vérification est supprimée
+            onCheckout={handleCheckout}
           />
         </div>
 
