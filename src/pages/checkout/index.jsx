@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useAuth } from "@/lib/auth"
 import { useLocation } from "wouter"
+import { useParams } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,8 +84,7 @@ export default function CheckoutPage() {
   const [formErrors, setFormErrors] = useState({})
 
   // Récupérer l'ID du fichier depuis l'URL
-  const urlParams = new URLSearchParams(window.location.search)
-  const fileId = urlParams.get("fileId")
+  const { fileId } = useParams()
 
   const form = useForm({
     defaultValues: {
