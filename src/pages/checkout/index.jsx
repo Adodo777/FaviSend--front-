@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useAuth } from "@/lib/auth"
-import { useLocation } from "wouter"
+import { useLocation, useRoute } from "wouter"
 import { useParams } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { apiRequest } from "@/lib/queryClient"
+import { queryClient } from "@/lib/queryClient"
 import { FileText, ImageIcon, Video, Music, Archive, ArrowLeft, CreditCard, User, UserX } from "lucide-react"
 import { Link } from "wouter"
 import { useForm } from "react-hook-form"
@@ -77,6 +78,7 @@ const validateForm = (values) => {
 }
 
 export default function CheckoutPage() {
+  const [, params] = useRoute("/checkout/:fileId")
   const { user, isLoading: authLoading } = useAuth()
   const [, navigate] = useLocation()
   const { toast } = useToast()
@@ -84,7 +86,7 @@ export default function CheckoutPage() {
   const [formErrors, setFormErrors] = useState({})
 
   // Récupérer l'ID du fichier depuis l'URL
-  const { fileId } = useParams()
+  const fileId = params?.fileId
 
   const form = useForm({
     defaultValues: {
@@ -114,13 +116,15 @@ export default function CheckoutPage() {
   }, [user, authLoading, form])
 
   const {
-    data: file,
+    data,
     isLoading: fileLoading,
     error,
-  } = useQuery({
+    } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     enabled: !!fileId,
-  })
+    })
+
+  const file = data?.fileData;
 
   const paymentMutation = useMutation({
     mutationFn: async (values) => {
