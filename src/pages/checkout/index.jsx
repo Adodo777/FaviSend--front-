@@ -124,7 +124,7 @@ export default function CheckoutPage() {
     enabled: !!fileId,
     })
 
-  const file = data?.fileData;
+  const file = data;
 
   const paymentMutation = useMutation({
     mutationFn: async (values) => {
