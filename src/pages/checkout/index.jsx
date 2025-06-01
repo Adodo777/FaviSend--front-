@@ -93,22 +93,23 @@ export default function CheckoutPage() {
       phoneNumber: "",
       country: "",
       city: "",
+      email: "",
     },
   })
 
   // Pré-remplir le formulaire si l'utilisateur est connecté
   useEffect(() => {
     if (user && !authLoading) {
-      const nameParts = user.displayName ? user.displayName.split(" ") : []
-      form.setValue("firstName", nameParts[0] || "")
-      form.setValue("lastName", nameParts.slice(1).join(" ") || "")
+      form.setValue("firstName", user.firstName || "")
+      form.setValue("lastName", user.lastName || "")
+      
+
+      form.setValue("email", user.email || "")
 
       // Si l'utilisateur a des informations de profil, les utiliser
-      if (user.profile) {
-        form.setValue("phoneNumber", user.profile.phoneNumber || "")
-        form.setValue("country", user.profile.country || "")
-        form.setValue("city", user.profile.city || "")
-      }
+      form.setValue("phoneNumber", user.phoneNumber || "")
+      form.setValue("country", user.country || "")
+      form.setValue("city", user.city || "")
     }
   }, [user, authLoading, form])
 
@@ -117,31 +118,29 @@ export default function CheckoutPage() {
     isLoading: fileLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/files", fileId],
+    queryKey: [`/api/files/detail/${fileId}`],
     enabled: !!fileId,
   })
 
   const paymentMutation = useMutation({
     mutationFn: async (values) => {
-      const response = await apiRequest("POST", "/api/payments/create", {
-        fileId: Number.parseInt(fileId),
+      const response = await apiRequest("POST", "/api/purchase/init", {
+        fileId: fileId,
         ...values,
-        amount: 450,
-        paymentMethod: "mobileMoney",
         userId: user?.id || null, // Inclure l'ID utilisateur si connecté
         isGuestPurchase: !user, // Indiquer si c'est un achat invité
       })
-      return response.json()
+      return response
     },
     onSuccess: (data) => {
       toast({
         title: "Paiement initié",
-        description: "Vous allez être redirigé vers MoneyOO pour finaliser le paiement",
+        description: "Vous allez être redirigé vers Moneroo pour finaliser le paiement",
       })
 
       // Redirection vers Moneroo ou autre processeur de paiement
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
       } else {
         // Simulation de redirection
         setTimeout(() => {
@@ -296,7 +295,7 @@ export default function CheckoutPage() {
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center text-xl font-bold">
                   <span>Total:</span>
-                  <span className="text-blue-600">450 CFA</span>
+                  <span className="text-blue-600">{file.price} CFA</span>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">Paiement sécurisé via Mobile Money</p>
               </div>
@@ -380,6 +379,25 @@ export default function CheckoutPage() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="Votre email"
+                            {...field}
+                            className={formErrors.email ? "border-red-500" : ""}
+                          />
+                        </FormControl>
+                        {formErrors.email && <FormMessage className="text-red-500">{formErrors.email}</FormMessage>}
+                      </FormItem>
+                    )}
+                    />
+                  
                   <FormField
                     control={form.control}
                     name="country"

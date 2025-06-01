@@ -11,6 +11,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Explore from "@/pages/explore";
+import CheckoutPage from "./pages/checkout";
 import File from "@/pages/file";
 import Auth from "@/pages/auth";
 import Profile from "@/pages/profil";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/explore" component={Explore}/>
       <Route path="/file/:id" component={File}/>
       <Route path="/auth" component={Auth}/>
+      <Route path="/checkout/:fileId" component={CheckoutPage}/>
       <Route path="/profil" component={Profile}/>
       <Route path="*" component={NotFound} />
     </Switch>
