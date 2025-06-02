@@ -219,16 +219,16 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 pt-8">
       <div className="container mx-auto max-w-4xl">
         <div className="flex items-center gap-4 mb-8">
-          <Link href={`/file/${file.shareUrl}`}>
+          <Link href={`/file/${file.id}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Finaliser l'achat</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Finaliser l'achat</h1>
         </div>
 
         {/* Statut de connexion */}
@@ -283,12 +283,8 @@ export default function CheckoutPage() {
 
               <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Nom du fichier:</span>
-                  <span className="font-medium">{file.fileName}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-gray-600">Taille:</span>
-                  <span className="font-medium">{formatFileSize(file.fileSize)}</span>
+                  <span className="font-medium">{file.fileSize}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Créateur:</span>
