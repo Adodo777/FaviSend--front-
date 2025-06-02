@@ -97,12 +97,23 @@ export default function CheckoutPage() {
       return <PaymentVerification paymentId={paymentId} />
     } catch (error) {
       console.error("Erreur lors de la vérification du paiement:", error)
-      toast({
-        variant: "destructive",
-        title: "Erreur de vérification",
-        description: "Impossible de vérifier le paiement. Veuillez réessayer plus tard.",
-      })
-      return null
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-red-600">Erreur de vérification</CardTitle>
+              <CardDescription>
+                Une erreur est survenue lors de la vérification du paiement. Veuillez réessayer plus tard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Link href="/explore">
+                <Button>Retour à l'exploration</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )
     }
   }
 
