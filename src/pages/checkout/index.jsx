@@ -91,30 +91,12 @@ export default function CheckoutPage() {
 
   console.log("CheckoutPage: fileId =", fileId, "paymentId =", paymentId)
 
+  if (paymentId === null) {
+    return null
+  }
   // Si un paymentId est présent, afficher le composant de vérification
   if (paymentId) {
-    try {
-      return <PaymentVerification paymentId={paymentId} />
-    } catch (error) {
-      console.error("Erreur lors de la vérification du paiement:", error)
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <CardTitle className="text-red-600">Erreur de vérification</CardTitle>
-              <CardDescription>
-                Une erreur est survenue lors de la vérification du paiement. Veuillez réessayer plus tard.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Link href="/explore">
-                <Button>Retour à l'exploration</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      )
-    }
+    return <PaymentVerification paymentId={paymentId} />
   }
 
   const form = useForm({
