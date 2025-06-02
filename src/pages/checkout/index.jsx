@@ -73,6 +73,7 @@ const validateForm = (values) => {
 export default function CheckoutPage() {
   const [, params] = useRoute("/checkout/:fileId")
   const { user, isLoading: authLoading } = useAuth()
+  const [,location] = useLocation()
   const [, navigate] = useLocation()
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -86,7 +87,7 @@ export default function CheckoutPage() {
     const searchParams = new URLSearchParams(window.location.search)
     const paymentIdFromUrl = searchParams.get("paymentId")
     setPaymentId(paymentIdFromUrl)
-  }, [window.location.search])
+  }, [location])
 
   console.log("CheckoutPage: fileId =", fileId, "paymentId =", paymentId)
 
