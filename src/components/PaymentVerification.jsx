@@ -20,6 +20,8 @@ export default function PaymentVerification({ paymentId }) {
         retry: 3,
         retryDelay: 2000,
     })
+    
+    console.log("Payment Data:", paymentData)
 
     const handleDownload = (downloadUrl) => {
         window.open(downloadUrl, '_blank')
