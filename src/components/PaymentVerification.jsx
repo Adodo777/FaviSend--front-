@@ -6,8 +6,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, XCircle, Clock, Download, Mail } from "lucide-react"
 import { apiRequest } from "@/lib/queryClient"
 import { Link } from "wouter"
+import axios from "axios"
+import { useToast } from "../hooks/use-toast"
 
 export default function PaymentVerification({ paymentId }) {
+    const { toast } = useToast()
+
     const {
         data: paymentData,
         isLoading,
@@ -23,8 +27,44 @@ export default function PaymentVerification({ paymentId }) {
     
     console.log("Payment Data:", paymentData)
 
+    const downloadFile = async (downloadUrl) => {
+        try {
+            const response = await axios.get(downloadUrl, {
+                responseType: 'blob', // Pour télécharger le fichier en tant que blob
+            })
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            
+            link.href = url
+            link.setAttribute('download', 'file.pdf')
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            toast({
+                title: "Téléchargement réussi",
+                description: "Votre fichier a été téléchargé avec succès.",
+                action: {
+                    label: "Voir le fichier",
+                    onClick: () => window.open(downloadUrl, "_blank"),
+                },
+            })
+
+        } catch (error) {
+            console.error("Error downloading the file:", error)
+            toast({
+                variant: "destructive",
+                title: "Erreur de téléchargement",
+                description: "Une erreur est survenue lors du téléchargement du fichier.",
+            })
+        }
+    }
+
     const handleDownload = (downloadUrl) => {
-        window.open(downloadUrl, '_blank')
+        downloadFile(downloadUrl)
+        toast({
+            title: "Téléchargement en cours",
+            description: "Votre fichier est en cours de téléchargement. Veuillez patienter.",
+        })
     }
 
     if (isLoading) {
