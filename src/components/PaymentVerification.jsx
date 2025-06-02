@@ -1,6 +1,5 @@
-
-import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -8,25 +7,21 @@ import { CheckCircle, XCircle, Clock, Download, Mail } from "lucide-react"
 import { apiRequest } from "@/lib/queryClient"
 import { Link } from "wouter"
 
-
 export default function PaymentVerification({ paymentId }) {
-    console.log("PaymentVerification component rendered with paymentId:", paymentId)
-
     const {
-        data,
+        data: paymentData,
         isLoading,
         error,
-        refetch
+        refetch,
     } = useQuery({
         queryKey: [`/api/purchase/verify/${paymentId}`],
+        queryFn: () => apiRequest(`/api/purchase/verify/${paymentId}`),
         enabled: !!paymentId,
         retry: 3,
         retryDelay: 2000,
     })
-    const paymentData = data
 
     const handleDownload = (downloadUrl) => {
-        console.log("Initiating download:", downloadUrl)
         window.open(downloadUrl, '_blank')
     }
 
@@ -53,15 +48,12 @@ export default function PaymentVerification({ paymentId }) {
         )
     }
 
-    // Paiement réussi
-    if (paymentData && paymentData.status === 'success') {
+    if (paymentData?.status === "success") {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-6">
                 <Card className="w-full max-w-lg">
                     <CardHeader className="text-center">
-                        <div className="mx-auto mb-4">
-                            <CheckCircle className="h-16 w-16 text-green-600" />
-                        </div>
+                        <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
                         <CardTitle className="text-green-800">Paiement réussi !</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -74,22 +66,20 @@ export default function PaymentVerification({ paymentId }) {
                         </Alert>
 
                         {paymentData.downloadUrl && (
-                            <div className="space-y-4">
-                                <div className="text-center">
-                                    <p className="text-gray-700 mb-4">
-                                        Votre fichier est prêt à être téléchargé !
-                                    </p>
-                                    <Button
-                                        onClick={() => handleDownload(paymentData.downloadUrl)}
-                                        className="w-full bg-green-600 hover:bg-green-700"
-                                        size="lg"
-                                    >
-                                        <Download className="h-5 w-5 mr-2" />
-                                        Télécharger le fichier
-                                    </Button>
-                                </div>
+                            <div className="space-y-4 text-center">
+                                <p className="text-gray-700 mb-4">
+                                    Votre fichier est prêt à être téléchargé !
+                                </p>
+                                <Button
+                                    onClick={() => handleDownload(paymentData.downloadUrl)}
+                                    className="w-full bg-green-600 hover:bg-green-700"
+                                    size="lg"
+                                >
+                                    <Download className="h-5 w-5 mr-2" />
+                                    Télécharger le fichier
+                                </Button>
 
-                                <Alert className="border-blue-200 bg-blue-50">
+                                <Alert className="border-blue-200 bg-blue-50 mt-4">
                                     <Mail className="h-4 w-4" />
                                     <AlertDescription className="text-blue-800">
                                         Le lien de téléchargement a également été envoyé par email pour votre convenance.
@@ -100,9 +90,7 @@ export default function PaymentVerification({ paymentId }) {
 
                         <div className="text-center pt-4">
                             <Link href="/explore">
-                                <Button variant="outline">
-                                    Continuer l'exploration
-                                </Button>
+                                <Button variant="outline">Continuer l'exploration</Button>
                             </Link>
                         </div>
                     </CardContent>
@@ -111,15 +99,12 @@ export default function PaymentVerification({ paymentId }) {
         )
     }
 
-    // Paiement en cours
-    if (error?.status === 404 || (paymentData && paymentData.status === 'pending')) {
+    if (error?.status === 404 || paymentData?.status === 'pending') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-6">
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
-                        <div className="mx-auto mb-4">
-                            <Clock className="h-16 w-16 text-yellow-600" />
-                        </div>
+                        <Clock className="h-16 w-16 text-yellow-600 mx-auto mb-4" />
                         <CardTitle className="text-yellow-800">Achat en cours</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
@@ -135,14 +120,9 @@ export default function PaymentVerification({ paymentId }) {
                         </Alert>
 
                         <div className="space-y-3 pt-4">
-                            <Button
-                                onClick={() => refetch()}
-                                variant="outline"
-                                className="w-full"
-                            >
+                            <Button onClick={() => refetch()} variant="outline" className="w-full">
                                 Vérifier à nouveau
                             </Button>
-
                             <Link href="/explore">
                                 <Button variant="ghost" className="w-full">
                                     Retour à l'accueil
@@ -155,14 +135,11 @@ export default function PaymentVerification({ paymentId }) {
         )
     }
 
-    // Échec du paiement
     return (
         <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-6">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
-                    <div className="mx-auto mb-4">
-                        <XCircle className="h-16 w-16 text-red-600" />
-                    </div>
+                    <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
                     <CardTitle className="text-red-800">Échec d'achat</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-center">
@@ -177,14 +154,9 @@ export default function PaymentVerification({ paymentId }) {
                     </Alert>
 
                     <div className="space-y-3 pt-4">
-                        <Button
-                            onClick={() => refetch()}
-                            variant="outline"
-                            className="w-full"
-                        >
+                        <Button onClick={() => refetch()} variant="outline" className="w-full">
                             Réessayer la vérification
                         </Button>
-
                         <Link href="/explore">
                             <Button variant="ghost" className="w-full">
                                 Retour à l'accueil
