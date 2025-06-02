@@ -15,7 +15,7 @@ export default function PaymentVerification({ paymentId }) {
         refetch,
     } = useQuery({
         queryKey: [`/api/purchase/verify/${paymentId}`],
-        queryFn: () => apiRequest(`/api/purchase/verify/${paymentId}`),
+        queryFn: () => apiRequest("GET", `/api/purchase/verify/${paymentId}`),
         enabled: !!paymentId,
         retry: 3,
         retryDelay: 2000,
