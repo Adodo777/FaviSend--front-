@@ -93,7 +93,17 @@ export default function CheckoutPage() {
 
   // Si un paymentId est présent, afficher le composant de vérification
   if (paymentId) {
-    return <PaymentVerification paymentId={paymentId} />
+    try {
+      return <PaymentVerification paymentId={paymentId} />
+    } catch (error) {
+      console.error("Erreur lors de la vérification du paiement:", error)
+      toast({
+        variant: "destructive",
+        title: "Erreur de vérification",
+        description: "Impossible de vérifier le paiement. Veuillez réessayer plus tard.",
+      })
+      return null
+    }
   }
 
   const form = useForm({
