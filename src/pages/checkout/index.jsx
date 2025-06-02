@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useAuth } from "@/lib/auth"
 import { useLocation, useRoute } from "wouter"
@@ -16,6 +16,7 @@ import { Link } from "wouter"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import PaymentVerification from "@/components/PaymentVerification"
 
 const getFileIcon = (fileType) => {
   if (fileType.startsWith("image/")) return <ImageIcon className="h-8 w-8" />
@@ -23,14 +24,6 @@ const getFileIcon = (fileType) => {
   if (fileType.startsWith("audio/")) return <Music className="h-8 w-8" />
   if (fileType.includes("zip") || fileType.includes("rar")) return <Archive className="h-8 w-8" />
   return <FileText className="h-8 w-8" />
-}
-
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return "0 Bytes"
-  const k = 1024
-  const sizes = ["Bytes", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
 }
 
 const countries = [
@@ -84,9 +77,23 @@ export default function CheckoutPage() {
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
   const [formErrors, setFormErrors] = useState({})
+  const [paymentId, setPaymentId] = useState(null)
 
   // Récupérer l'ID du fichier depuis l'URL
   const fileId = params?.fileId
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const paymentIdFromUrl = searchParams.get("paymentId")
+    setPaymentId(paymentIdFromUrl)
+  }, [window.location.search])
+
+  console.log("CheckoutPage: fileId =", fileId, "paymentId =", paymentId)
+
+  // Si un paymentId est présent, afficher le composant de vérification
+  if (paymentId) {
+    return <PaymentVerification paymentId={paymentId} />
+  }
 
   const form = useForm({
     defaultValues: {
@@ -221,7 +228,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 pt-8">
       <div className="container mx-auto max-w-4xl">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-8 mt-14">
           <Link href={`/file/${file.id}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />

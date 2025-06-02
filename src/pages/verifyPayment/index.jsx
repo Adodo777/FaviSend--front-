@@ -1,70 +1,62 @@
-import React, { useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { useQueries } from "@tanstack/react-query";
 
-export default function VerifyPayment() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentId = urlParams.get("paymentId");
+export default function VerifyPaiementPage() {
+  const [params] = useSearchParams();
+  const paymentId = params.get("paymentId");
+  const fileId = params.get("fileId");
 
-    const { user } = useAuth();
-    const { toast } = useToast();
+  const [status, setStatus] = useState("loading"); // loading, success, error
+  const [downloadUrl, setDownloadUrl] = useState(null);
 
-    const { data, isLoading, error } = useQuery({
-        queryKey: [`/api/payments/verify/${paymentId}`],
-        enabled: !!paymentId,
-    });
-    const navigate = useNavigate();
-    const { mutate: verifyPayment } = useMutation({
-        mutationFn: async () => {
-            if (!paymentId) throw new Error("Payment ID is required");
-            return apiRequest("POST", `/api/payments/verify/${paymentId}`);
-        },
-        onSuccess: (data) => {
-            toast({
-                title: "Paiement vérifié",
-                description: "Votre paiement a été vérifié avec succès.",
-            });
-            navigate(`/file/${data.fileId}`);
-        },
-        onError: (error) => {
-            console.error("Erreur lors de la vérification du paiement:", error);
-            toast({
-                variant: "destructive",
-                title: "Erreur",
-                description: `Impossible de vérifier le paiement: ${error.message || error}`,
-            });
-        },
-    });
-    useEffect(() => {
-        if (data) {
-            verifyPayment();
-        }
-    }, [data, verifyPayment]);
-    useEffect(() => {
-        if (error) {
-            toast({
-                variant: "destructive",
-                title: "Erreur",
-                description: `Impossible de vérifier le paiement: ${error.message || error}`,
-            });
-            navigate("/");
-        }
-    }, [error, toast, navigate]);
-    return (
-        <div className="flex items-center justify-center h-screen">
-            {isLoading ? (
-                <div className="text-center">
-                    <p>Vérification du paiement en cours...</p>
-                </div>
-            ) : (
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold">Vérification du paiement</h1>
-                    <p>Veuillez patienter pendant que nous vérifions votre paiement.</p>
-                </div>
-            )}
-        </div>
-    );
+  const { data, isLoading, error,} = useQueries({
+    queryKey: [`/api/purchase/verify/${paymentId}`],
+    enabled: !!paymentId,
+  });
+
+  return (
+    <section className="min-h-[80vh] flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white dark:bg-card p-6 rounded-xl shadow-lg border border-border text-center space-y-6">
+        {status === "loading" && (
+          <>
+            <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary" />
+            <h2 className="text-xl font-semibold">Vérification du paiement...</h2>
+            <p className="text-muted-foreground text-sm">
+              Un instant, nous validons votre transaction.
+            </p>
+          </>
+        )}
+
+        {status === "success" && (
+          <>
+            <CheckCircle className="h-8 w-8 mx-auto text-green-600" />
+            <h2 className="text-xl font-bold">Paiement validé ✅</h2>
+            <p className="text-muted-foreground text-sm">
+              Merci pour votre paiement. Vous pouvez maintenant télécharger votre fichier.
+            </p>
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-4 bg-primary text-white px-6 py-3 rounded-md font-medium hover:opacity-90 transition"
+            >
+              📥 Télécharger maintenant
+            </a>
+          </>
+        )}
+
+        {status === "error" && (
+          <>
+            <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500" />
+            <h2 className="text-xl font-bold">Erreur lors de la vérification</h2>
+            <p className="text-muted-foreground text-sm">
+              Paiement introuvable ou non encore validé. Si le problème persiste, contactez le support.
+            </p>
+          </>
+        )}
+      </div>
+    </section>
+  );
 }
