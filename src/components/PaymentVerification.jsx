@@ -1,5 +1,6 @@
+
 import { useQuery } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useLocation } from "wouter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -7,10 +8,15 @@ import { CheckCircle, XCircle, Clock, Download, Mail } from "lucide-react"
 import { apiRequest } from "@/lib/queryClient"
 import { Link } from "wouter"
 import axios from "axios"
-import { useToast } from "../hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
-export default function PaymentVerification({ paymentId }) {
+export default function PaymentVerificationPage() {
     const { toast } = useToast()
+    const [location] = useLocation()
+    
+    // Extraire le paymentId depuis l'URL
+    const searchParams = new URLSearchParams(window.location.search)
+    const paymentId = searchParams.get("paymentId")
 
     const {
         data: paymentData,
@@ -30,7 +36,7 @@ export default function PaymentVerification({ paymentId }) {
     const downloadFile = async (downloadUrl) => {
         try {
             const response = await axios.get(downloadUrl, {
-                responseType: 'blob', // Pour télécharger le fichier en tant que blob
+                responseType: 'blob',
             })
             const url = window.URL.createObjectURL(new Blob([response.data]))
             const link = document.createElement('a')
@@ -65,6 +71,28 @@ export default function PaymentVerification({ paymentId }) {
             title: "Téléchargement en cours",
             description: "Votre fichier est en cours de téléchargement. Veuillez patienter.",
         })
+    }
+
+    // Si aucun paymentId n'est fourni, rediriger vers l'accueil
+    if (!paymentId) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-6">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                        <CardTitle className="text-red-800">Lien invalide</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-center">
+                        <p className="text-gray-700">
+                            Le lien de vérification de paiement est invalide ou expiré.
+                        </p>
+                        <Link href="/explore">
+                            <Button className="w-full">Retour à l'accueil</Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+        )
     }
 
     if (isLoading) {

@@ -12,6 +12,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Explore from "@/pages/explore";
 import CheckoutPage from "./pages/checkout";
+import PaymentVerificationPage from "./components/PaymentVerification.jsx";
 import File from "@/pages/file";
 import Auth from "@/pages/auth";
 import Profile from "@/pages/profil";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/file/:id" component={File}/>
       <Route path="/auth" component={Auth}/>
       <Route path="/checkout/:fileId" component={CheckoutPage}/>
+      <Route path="/payment-verification" component={PaymentVerificationPage}/>
       <Route path="/profil" component={Profile}/>
       <Route path="*" component={NotFound} />
     </Switch>

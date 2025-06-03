@@ -1,22 +1,19 @@
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useAuth } from "@/lib/auth"
 import { useLocation, useRoute } from "wouter"
-import { useParams } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { apiRequest } from "@/lib/queryClient"
-import { queryClient } from "@/lib/queryClient"
 import { FileText, ImageIcon, Video, Music, Archive, ArrowLeft, CreditCard, User, UserX } from "lucide-react"
 import { Link } from "wouter"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import PaymentVerification from "@/components/PaymentVerification"
 
 const getFileIcon = (fileType) => {
   if (fileType.startsWith("image/")) return <ImageIcon className="h-8 w-8" />
@@ -73,31 +70,26 @@ const validateForm = (values) => {
 export default function CheckoutPage() {
   const [, params] = useRoute("/checkout/:fileId")
   const { user, isLoading: authLoading } = useAuth()
-  const [,location] = useLocation()
   const [, navigate] = useLocation()
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
   const [formErrors, setFormErrors] = useState({})
-  const [paymentId, setPaymentId] = useState(null)
 
   // Récupérer l'ID du fichier depuis l'URL
   const fileId = params?.fileId
 
+  // Vérifier s'il y a un paymentId dans l'URL et rediriger vers la page de vérification
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
     const paymentIdFromUrl = searchParams.get("paymentId")
-    setPaymentId(paymentIdFromUrl)
-  }, [location])
+    
+    if (paymentIdFromUrl) {
+      // Rediriger vers la page de vérification de paiement
+      navigate(`/payment-verification?paymentId=${paymentIdFromUrl}`)
+    }
+  }, [navigate])
 
-  console.log("CheckoutPage: fileId =", fileId, "paymentId =", paymentId)
-
-  if (paymentId === null) {
-    return null
-  }
-  // Si un paymentId est présent, afficher le composant de vérification
-  if (paymentId) {
-    return <PaymentVerification paymentId={paymentId} />
-  }
+  console.log("CheckoutPage: fileId =", fileId)
 
   const form = useForm({
     defaultValues: {
@@ -115,8 +107,6 @@ export default function CheckoutPage() {
     if (user && !authLoading) {
       form.setValue("firstName", user.firstName || "")
       form.setValue("lastName", user.lastName || "")
-      
-
       form.setValue("email", user.email || "")
 
       // Si l'utilisateur a des informations de profil, les utiliser
@@ -130,10 +120,10 @@ export default function CheckoutPage() {
     data,
     isLoading: fileLoading,
     error,
-    } = useQuery({
+  } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     enabled: !!fileId,
-    })
+  })
 
   const file = data;
 
@@ -407,7 +397,7 @@ export default function CheckoutPage() {
                         {formErrors.email && <FormMessage className="text-red-500">{formErrors.email}</FormMessage>}
                       </FormItem>
                     )}
-                    />
+                  />
                   
                   <FormField
                     control={form.control}
@@ -471,7 +461,7 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         <CreditCard className="h-4 w-4 mr-2" />
-                        Procéder au paiement (450 CFA)
+                        Procéder au paiement ({file.price} CFA)
                       </>
                     )}
                   </Button>
