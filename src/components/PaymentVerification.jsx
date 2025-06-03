@@ -14,7 +14,6 @@ export default function PaymentVerificationPage() {
     const { toast } = useToast()
     const [location] = useLocation()
     
-    // Extraire le paymentId depuis l'URL
     const searchParams = new URLSearchParams(window.location.search)
     const paymentId = searchParams.get("paymentId")
 
@@ -49,10 +48,6 @@ export default function PaymentVerificationPage() {
             toast({
                 title: "Téléchargement réussi",
                 description: "Votre fichier a été téléchargé avec succès.",
-                action: {
-                    label: "Voir le fichier",
-                    onClick: () => window.open(downloadUrl, "_blank"),
-                },
             })
 
         } catch (error) {
@@ -73,7 +68,6 @@ export default function PaymentVerificationPage() {
         })
     }
 
-    // Si aucun paymentId n'est fourni, rediriger vers l'accueil
     if (!paymentId) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-6">
@@ -118,7 +112,7 @@ export default function PaymentVerificationPage() {
         )
     }
 
-    if (paymentData?.status === "success") {
+    if (paymentData && paymentData.status === "success") {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-6">
                 <Card className="w-full max-w-lg">
@@ -169,7 +163,7 @@ export default function PaymentVerificationPage() {
         )
     }
 
-    if (error?.status === 404 || paymentData?.status === 'pending') {
+    if (error || (paymentData && paymentData.status === 'pending')) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-6">
                 <Card className="w-full max-w-md">
