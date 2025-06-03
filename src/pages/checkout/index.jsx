@@ -405,15 +405,33 @@ export default function CheckoutPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Pays *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            console.log("Country selected:", value)
+                            field.onChange(value)
+                          }} 
+                          value={field.value}
+                          key={field.value} // Force re-render when value changes
+                        >
                           <FormControl>
-                            <SelectTrigger className={formErrors.country ? "border-red-500" : ""}>
+                          <SelectTrigger 
+                              className={formErrors.country ? "border-red-500" : ""}
+                              onTouchStart={(e) => e.stopPropagation()} // Prevent touch conflicts on mobile
+                            >
                               <SelectValue placeholder="Sélectionnez votre pays" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent 
+                            className="z-50 bg-white border shadow-lg"
+                            position="popper"
+                            sideOffset={5}
+                          >
                             {countries.map((country) => (
-                              <SelectItem key={country} value={country}>
+                              <SelectItem 
+                              key={country} 
+                              value={country}
+                              className="cursor-pointer hover:bg-gray-100"
+                            >
                                 {country}
                               </SelectItem>
                             ))}
