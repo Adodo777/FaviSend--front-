@@ -59,9 +59,20 @@ export default function PaymentVerificationPage() {
             })
         }
     }
+    const downloadFileDirectly = (downloadUrl) => {
+        // Lancer le téléchargement du fichier directement sans passer par apiRequest
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        const fileName = downloadUrl.split('/').pop() || 'file' // Extraire le nom du fichier depuis l'URL
+        link.setAttribute('download', fileName) // Utiliser le nom du fichier extrait  document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+    }
 
     const handleDownload = (downloadUrl) => {
-        downloadFile(downloadUrl)
+        //lancer le téléchargement du fichier directement sans passer par apiRequest sans utiliser axios
+        downloadFileDirectly(downloadUrl)
         toast({
             title: "Téléchargement en cours",
             description: "Votre fichier est en cours de téléchargement. Veuillez patienter.",
