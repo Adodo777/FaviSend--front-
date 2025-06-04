@@ -83,6 +83,7 @@ export default function Profile() {
       setIsEditing(false);
     },
     onError: (error) => {
+      console.error("Erreur lors de la mise à jour du profil :", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -122,6 +123,7 @@ export default function Profile() {
         description: "Votre photo de profil a été mise à jour.",
       });
     } catch (error) {
+      console.error("Erreur lors du téléchargement de la photo :", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -224,7 +226,7 @@ export default function Profile() {
                     </div>
 
                     {isEditing && (
-                      <div key="editing" className="w-full max-w-sm">
+                      <div className="w-full max-w-sm">
                         <label
                           htmlFor="profile-photo"
                           className="block text-center text-sm font-medium text-gray-700 mb-2"
