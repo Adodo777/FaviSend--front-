@@ -42,8 +42,8 @@ export default function MyPurchasesPage() {
         isLoading,
         error,
     } = useQuery({
-        queryKey: [`/api/purchases/list`],
-        queryFn: () => apiRequest("GET", `/api/purchases/list`, null, {
+        queryKey: [`/api/purchase/list`],
+        queryFn: () => apiRequest("GET", `/api/purchase/list`, null, {
             Authorization: `Bearer ${accessToken}`
         }),
         enabled: !!accessToken,
