@@ -7,7 +7,8 @@ import {
   User, 
   Menu, 
   X, 
-  Star, 
+  Star,
+  Save,
   StarHalf,
   Shield, 
   Link, 
@@ -97,4 +98,5 @@ export const Icons = {
   instagram: Instagram,
   linkedin: Linkedin,
   pencil: Pencil,
+  save: Save,
 };
