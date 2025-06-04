@@ -67,23 +67,30 @@ export default function EmailVerificationPage() {
         setError("")
 
         try {
-            const response = await apiRequest("POST", "/api/auth/verify-code", {
+            const response = await apiRequest("POST", "/api/auth/verify-email", {
                 email,
                 verificationCode
             })
 
             if (response.success && response.accessToken) {
-                // Stocker le token dans localStorage
-                localStorage.setItem('accessToken', response.accessToken)
-                localStorage.setItem('userEmail', email)
+                // Correction pour mobile - utiliser setTimeout pour éviter les problèmes de rendu
+                setTimeout(() => {
+                    try {
+                        localStorage.setItem('accessToken', response.accessToken)
+                        localStorage.setItem('userEmail', email)
 
-                toast({
-                    title: "Vérification réussie",
-                    description: "Accès autorisé à vos achats",
-                })
+                        toast({
+                            title: "Vérification réussie",
+                            description: "Accès autorisé à vos achats",
+                        })
 
-                // Rediriger vers la page des achats
-                navigate('/my-purchases')
+                        // Rediriger vers la page des achats
+                        navigate('/my-purchases')
+                    } catch (storageError) {
+                        console.error("Storage error:", storageError)
+                        setError("Erreur de stockage des données. Veuillez réessayer.")
+                    }
+                }, 100)
             } else {
                 setError("Code de vérification incorrect")
             }

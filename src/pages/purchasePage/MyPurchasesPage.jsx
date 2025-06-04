@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -62,13 +63,26 @@ export default function MyPurchasesPage() {
     });
 
     const downloadFile = (downloadUrl, fileName) => {
-        // Lancer le téléchargement du fichier directement
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.setAttribute("download", fileName || "file"); // Utiliser le nom du fichier ou un nom par défaut
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Correction pour mobile : utiliser setTimeout pour éviter les problèmes de DOM
+        setTimeout(() => {
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.setAttribute("download", fileName || "file");
+            
+            // Ajouter temporairement au DOM
+            document.body.appendChild(link);
+            link.click();
+            
+            // Nettoyer après un court délai
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+        }, 100);
+
+        toast({
+            title: "Téléchargement démarré",
+            description: `${fileName} est en cours de téléchargement.`,
+        });
     };
 
     const handleLogout = () => {
