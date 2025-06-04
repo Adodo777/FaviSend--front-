@@ -30,55 +30,6 @@ export default function PaymentVerificationPage() {
         retryDelay: 2000,
     })
     
-    console.log("Payment Data:", paymentData)
-
-    const downloadFile = async (downloadUrl) => {
-        try {
-            const response = await axios.get(downloadUrl, {
-                responseType: 'blob',
-            })
-            const url = window.URL.createObjectURL(new Blob([response.data]))
-            const link = document.createElement('a')
-            
-            link.href = url
-            link.setAttribute('download', 'file.pdf')
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            toast({
-                title: "Téléchargement réussi",
-                description: "Votre fichier a été téléchargé avec succès.",
-            })
-
-        } catch (error) {
-            console.error("Error downloading the file:", error)
-            toast({
-                variant: "destructive",
-                title: "Erreur de téléchargement",
-                description: "Une erreur est survenue lors du téléchargement du fichier.",
-            })
-        }
-    }
-    const downloadFileDirectly = (downloadUrl) => {
-        // Lancer le téléchargement du fichier directement sans passer par apiRequest
-        const link = document.createElement('a')
-        link.href = downloadUrl
-        const fileName = downloadUrl.split('/').pop() || 'file' // Extraire le nom du fichier depuis l'URL
-        link.setAttribute('download', fileName) // Utiliser le nom du fichier extrait  document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
-    }
-
-    const handleDownload = (downloadUrl) => {
-        //lancer le téléchargement du fichier directement sans passer par apiRequest sans utiliser axios
-        downloadFileDirectly(downloadUrl)
-        toast({
-            title: "Téléchargement en cours",
-            description: "Votre fichier est en cours de téléchargement. Veuillez patienter.",
-        })
-    }
-
     if (!paymentId) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-6">
@@ -139,30 +90,18 @@ export default function PaymentVerificationPage() {
                                 {paymentData.buyerEmail}
                             </AlertDescription>
                         </Alert>
-
-                        {paymentData.downloadUrl && (
-                            <div className="space-y-4 text-center">
-                                <p className="text-gray-700 mb-4">
-                                    Votre fichier est prêt à être téléchargé !
-                                </p>
-                                <Button
-                                    onClick={() => handleDownload(paymentData.downloadUrl)}
-                                    className="w-full bg-green-600 hover:bg-green-700"
-                                    size="lg"
-                                >
-                                    <Download className="h-5 w-5 mr-2" />
-                                    Télécharger le fichier
+    
+                        <div className="space-y-4 text-center">
+                            <p className="text-gray-700 mb-4">
+                                Vous pouvez accéder à vos achats via la page dédiée.
+                            </p>
+                            <Link href="/my-purchases">
+                                <Button className="w-full bg-green-600 hover:bg-green-700" size="lg">
+                                    Accéder à mes achats
                                 </Button>
-
-                                <Alert className="border-blue-200 bg-blue-50 mt-4">
-                                    <Mail className="h-4 w-4" />
-                                    <AlertDescription className="text-blue-800">
-                                        Le lien de téléchargement a également été envoyé par email pour votre convenance.
-                                    </AlertDescription>
-                                </Alert>
-                            </div>
-                        )}
-
+                            </Link>
+                        </div>
+    
                         <div className="text-center pt-4">
                             <Link href="/explore">
                                 <Button variant="outline">Continuer l'exploration</Button>
@@ -171,7 +110,7 @@ export default function PaymentVerificationPage() {
                     </CardContent>
                 </Card>
             </div>
-        )
+        );
     }
 
     if (error || (paymentData && paymentData.status === 'pending')) {
