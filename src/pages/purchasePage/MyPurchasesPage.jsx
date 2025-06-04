@@ -1,72 +1,84 @@
-
-import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { useLocation } from "wouter"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Download, FileText, ImageIcon, Video, Music, Archive, Mail, Shield, LogOut } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { apiRequest } from "@/lib/queryClient"
+import axios from "axios";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Download, FileText, ImageIcon, Video, Music, Archive, Mail, Shield, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const getFileIcon = (fileType) => {
-    if (fileType?.startsWith("image/")) return <ImageIcon className="h-6 w-6" />
-    if (fileType?.startsWith("video/")) return <Video className="h-6 w-6" />
-    if (fileType?.startsWith("audio/")) return <Music className="h-6 w-6" />
-    if (fileType?.includes("zip") || fileType?.includes("rar")) return <Archive className="h-6 w-6" />
-    return <FileText className="h-6 w-6" />
-}
+    if (fileType?.startsWith("image/")) return <ImageIcon className="h-6 w-6" />;
+    if (fileType?.startsWith("video/")) return <Video className="h-6 w-6" />;
+    if (fileType?.startsWith("audio/")) return <Music className="h-6 w-6" />;
+    if (fileType?.includes("zip") || fileType?.includes("rar")) return <Archive className="h-6 w-6" />;
+    return <FileText className="h-6 w-6" />;
+};
 
 export default function MyPurchasesPage() {
-    const [, navigate] = useLocation()
-    const { toast } = useToast()
-    const [accessToken, setAccessToken] = useState(null)
-    const [userEmail, setUserEmail] = useState(null)
+    const [, navigate] = useLocation();
+    const { toast } = useToast();
+    const [accessToken, setAccessToken] = useState(null);
+    const [email, setEmail] = useState(null);
 
-    // Vérifier le token d'accès dans localStorage
+    // Vérifier le token d'accès et l'email dans localStorage
     useEffect(() => {
-        const token = localStorage.getItem("accessToken")
-        const email = localStorage.getItem("userEmail")
+        const token = localStorage.getItem("accessToken");
+        const storedEmail = localStorage.getItem("userEmail");
 
         if (!token) {
-            navigate("/email-verification")
-            return
+            navigate("/email-verification");
+            return;
         }
 
-        setAccessToken(token)
-        setUserEmail(email)
-    }, [navigate])
+        setAccessToken(token);
+        setEmail(storedEmail);
+    }, [navigate]);
 
     const {
         data: purchases,
         isLoading,
         error,
     } = useQuery({
-        queryKey: [`/api/purchase/list`],
-        queryFn: () => apiRequest("GET", `/api/purchase/list`, userEmail, {
-            Authorization: `Bearer ${accessToken}`
-        }),
-        enabled: !!accessToken,
-    })
+        queryKey: [`/api/purchase/list`, email],
+        queryFn: async () => {
+            try {
+                const response = await axios.post(
+                    "https://backend-favisend.onrender.com/api/purchase/list",
+                    { email }, // Envoyer l'email dans le corps de la requête
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    }
+                );
+                return response.data;
+            } catch (err) {
+                throw new Error(err.response?.data?.message || "Erreur lors de la récupération des achats.");
+            }
+        },
+        enabled: !!accessToken && !!email,
+    });
 
     const downloadFile = (downloadUrl, fileName) => {
-        // Lancer le téléchargement du fichier directement sans passer par apiRequest
-        const link = document.createElement('a')
-        link.href = downloadUrl
-        link.setAttribute('download', fileName || 'file') // Utiliser le nom du fichier ou un nom par défaut
-        link.click()
-        document.body.removeChild(link)
-
-    }
+        // Lancer le téléchargement du fichier directement
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", fileName || "file"); // Utiliser le nom du fichier ou un nom par défaut
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleLogout = () => {
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("userEmail")
-        navigate("/email-verification")
-    }
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("userEmail");
+        navigate("/email-verification");
+    };
 
     if (!accessToken) {
-        return null
+        return null;
     }
 
     if (isLoading) {
@@ -79,7 +91,7 @@ export default function MyPurchasesPage() {
                     </CardHeader>
                 </Card>
             </div>
-        )
+        );
     }
 
     if (error) {
@@ -99,7 +111,7 @@ export default function MyPurchasesPage() {
                     </CardContent>
                 </Card>
             </div>
-        )
+        );
     }
 
     return (
@@ -120,7 +132,7 @@ export default function MyPurchasesPage() {
                     <Alert className="border-green-200 bg-green-50">
                         <Mail className="h-4 w-4" />
                         <AlertDescription className="text-green-800">
-                            Connecté en tant que <strong>{userEmail}</strong> - Vous pouvez télécharger tous vos fichiers achetés
+                            Connecté en tant que <strong>{email}</strong> - Vous pouvez télécharger tous vos fichiers achetés
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -146,7 +158,7 @@ export default function MyPurchasesPage() {
                                             <div>
                                                 <CardTitle className="text-lg">{purchase.file.title}</CardTitle>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    Acheté le {new Date(purchase.purchaseDate).toLocaleDateString('fr-FR')}
+                                                    Acheté le {new Date(purchase.purchaseDate).toLocaleDateString("fr-FR")}
                                                 </p>
                                             </div>
                                         </div>
@@ -165,7 +177,9 @@ export default function MyPurchasesPage() {
                                     <div className="bg-gray-50 p-4 rounded-lg">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm text-gray-600">Créateur:</span>
-                                            <span className="font-medium">{purchase.file.user.displayName || purchase.file.user.username}</span>
+                                            <span className="font-medium">
+                                                {purchase.file.user.displayName || purchase.file.user.username}
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-600">ID de commande:</span>
@@ -188,5 +202,5 @@ export default function MyPurchasesPage() {
                 )}
             </div>
         </div>
-    )
+    );
 }
