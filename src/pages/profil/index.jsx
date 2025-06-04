@@ -43,7 +43,6 @@ export default function Profile() {
   // Redirection si l'utilisateur n'est pas connecté
   useEffect(() => {
     if (!isLoading && !user) {
-      console.log("Redirection vers /auth - utilisateur non connecté");
       setLocation("/auth");
     }
   }, [isLoading, user, setLocation]);
@@ -84,7 +83,6 @@ export default function Profile() {
       setIsEditing(false);
     },
     onError: (error) => {
-      console.error("Erreur mise à jour profil:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -94,7 +92,6 @@ export default function Profile() {
   });
 
   const handleSubmit = (formData) => {
-    console.log("Soumission du formulaire:", formData);
     updateProfileMutation.mutate(formData);
   };
 
@@ -102,7 +99,6 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
-    console.log("Upload de photo:", file.name);
     const formData = new FormData();
     formData.append("photo", file);
 
@@ -126,7 +122,6 @@ export default function Profile() {
         description: "Votre photo de profil a été mise à jour.",
       });
     } catch (error) {
-      console.error("Erreur upload photo:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -166,17 +161,15 @@ export default function Profile() {
   // Rendu principal
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Container principal avec padding-top pour navbar */}
       <div className="pt-20 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Bouton retour */}
           <div className="mb-8">
             <Button
               variant="ghost"
               onClick={() => setLocation("/")}
               className="mb-4 hover:bg-gray-100"
             >
-              <Icons.arrowLeft className="mr-2 h-4 w-4" /> 
+              <Icons.arrowLeft className="mr-2 h-4 w-4" />
               Retour à l'accueil
             </Button>
 
@@ -184,7 +177,6 @@ export default function Profile() {
               Mon compte
             </h1>
 
-            {/* Card principale */}
             <Card className="w-full max-w-2xl mx-auto shadow-lg">
               <CardHeader className="bg-white border-b border-gray-100">
                 <CardTitle className="text-xl sm:text-2xl text-gray-900">
@@ -194,10 +186,9 @@ export default function Profile() {
                   Consultez et mettez à jour vos informations personnelles
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="bg-white p-4 sm:p-6">
                 <div className="flex flex-col gap-6">
-                  {/* Section Avatar - Toujours en haut sur mobile */}
                   <div className="flex flex-col items-center space-y-4 w-full">
                     <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-gray-200">
                       <AvatarImage
@@ -212,8 +203,7 @@ export default function Profile() {
                           "U"}
                       </AvatarFallback>
                     </Avatar>
-                    
-                    {/* Informations utilisateur */}
+
                     <div className="text-center space-y-2 w-full">
                       <p className="font-semibold text-gray-900 text-base sm:text-lg">
                         {user?.displayName || user?.username || "Utilisateur"}
@@ -233,7 +223,6 @@ export default function Profile() {
                       )}
                     </div>
 
-                    {/* Upload photo en mode édition - Placé après les infos utilisateur */}
                     {isEditing && (
                       <div className="w-full max-w-sm">
                         <label
@@ -253,14 +242,12 @@ export default function Profile() {
                     )}
                   </div>
 
-                  {/* Section Formulaire */}
                   <div className="w-full">
                     <Form {...form}>
                       <form
                         onSubmit={form.handleSubmit(handleSubmit)}
                         className="space-y-4"
                       >
-                        {/* Prénom et Nom */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
@@ -276,8 +263,8 @@ export default function Profile() {
                                     disabled={!isEditing}
                                     placeholder="Votre prénom"
                                     className={`transition-colors duration-200 ${
-                                      !isEditing 
-                                        ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                      !isEditing
+                                        ? "bg-gray-50 text-gray-600 border-gray-200"
                                         : "bg-white border-gray-300 focus:border-blue-500"
                                     }`}
                                   />
@@ -300,8 +287,8 @@ export default function Profile() {
                                     disabled={!isEditing}
                                     placeholder="Votre nom"
                                     className={`transition-colors duration-200 ${
-                                      !isEditing 
-                                        ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                      !isEditing
+                                        ? "bg-gray-50 text-gray-600 border-gray-200"
                                         : "bg-white border-gray-300 focus:border-blue-500"
                                     }`}
                                   />
@@ -312,7 +299,6 @@ export default function Profile() {
                           />
                         </div>
 
-                        {/* Nom d'affichage */}
                         <FormField
                           control={form.control}
                           name="displayName"
@@ -327,8 +313,8 @@ export default function Profile() {
                                   disabled={!isEditing}
                                   placeholder="Nom affiché publiquement"
                                   className={`transition-colors duration-200 ${
-                                    !isEditing 
-                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                    !isEditing
+                                      ? "bg-gray-50 text-gray-600 border-gray-200"
                                       : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
@@ -338,7 +324,6 @@ export default function Profile() {
                           )}
                         />
 
-                        {/* Nom d'utilisateur */}
                         <FormField
                           control={form.control}
                           name="username"
@@ -353,8 +338,8 @@ export default function Profile() {
                                   disabled={!isEditing}
                                   placeholder="Nom d'utilisateur unique"
                                   className={`transition-colors duration-200 ${
-                                    !isEditing 
-                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                    !isEditing
+                                      ? "bg-gray-50 text-gray-600 border-gray-200"
                                       : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
@@ -364,7 +349,6 @@ export default function Profile() {
                           )}
                         />
 
-                        {/* Téléphone */}
                         <FormField
                           control={form.control}
                           name="phone"
@@ -379,8 +363,8 @@ export default function Profile() {
                                   disabled={!isEditing}
                                   placeholder="Votre numéro de téléphone"
                                   className={`transition-colors duration-200 ${
-                                    !isEditing 
-                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                    !isEditing
+                                      ? "bg-gray-50 text-gray-600 border-gray-200"
                                       : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
@@ -390,7 +374,6 @@ export default function Profile() {
                           )}
                         />
 
-                        {/* Bouton de sauvegarde */}
                         {isEditing && (
                           <div className="pt-4">
                             <Button
@@ -417,28 +400,21 @@ export default function Profile() {
                   </div>
                 </div>
               </CardContent>
-              
-              {/* Footer avec boutons d'action */}
+
               <CardFooter className="bg-gray-50 border-t border-gray-100 p-4 sm:p-6">
                 <div className="w-full flex justify-center sm:justify-end">
                   {!isEditing ? (
-                    <Button 
-                      onClick={() => {
-                        console.log("Passage en mode édition");
-                        setIsEditing(true);
-                      }}
+                    <Button
+                      onClick={() => setIsEditing(true)}
                       className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
                     >
                       <Icons.pencil className="mr-2 h-4 w-4" />
                       Modifier le profil
                     </Button>
                   ) : (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        console.log("Annulation du mode édition");
-                        setIsEditing(false);
-                      }}
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
                       className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50 font-medium px-6 py-2"
                     >
                       <Icons.x className="mr-2 h-4 w-4" />
