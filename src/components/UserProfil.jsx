@@ -31,14 +31,6 @@ const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
 
-  // Vérification si `user` est défini
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Icons.loader className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   const form = useForm({
     defaultValues: {

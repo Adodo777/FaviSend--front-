@@ -4,19 +4,20 @@ import { Icons } from "@/assets/icons";
 import { useLocation } from "wouter";
 import UserProfile from "@/components/UserProfil";
 import { useEffect } from "react";
-import { is } from "date-fns/locale";
 
 export default function Profile() {
     const { user, isLoading } = useAuth();
     const [, setLocation] = useLocation();
 
+    // Redirection si l'utilisateur n'est pas connecté
     useEffect(() => {
         if (!isLoading && !user) {
             setLocation("/auth");
         }
     }, [isLoading, user, setLocation]);
 
-    if (!user) {
+    // Affichage du loader pendant le chargement
+    if (isLoading) {
         return (
             <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-gray-50">
                 <div className="animate-spin">
@@ -26,6 +27,16 @@ export default function Profile() {
         );
     }
 
+    // Affichage si l'utilisateur n'est pas défini
+    if (!user) {
+        return (
+            <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-gray-50">
+                <p className="text-gray-600">Redirection en cours...</p>
+            </div>
+        );
+    }
+
+    // Rendu principal
     return (
         <div className="pt-20 pb-16 bg-gray-50 min-h-screen">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +51,8 @@ export default function Profile() {
                     
                     <h1 className="text-3xl font-heading font-bold mb-6">Mon compte</h1>
                     
-                    <UserProfile />
+                    {/* Vérification avant de rendre UserProfile */}
+                    {user && <UserProfile />}
                 </div>
             </div>
         </div>
