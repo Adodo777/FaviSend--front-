@@ -199,11 +199,7 @@ const UserProfile = () => {
                     <FormItem>
                       <FormLabel>Nom d'affichage</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          disabled={!isEditing}
-                          placeholder="Nom affiché publiquement"
-                        />
+                        <Input {...field} disabled={!isEditing} placeholder="Nom affiché publiquement" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -217,11 +213,7 @@ const UserProfile = () => {
                     <FormItem>
                       <FormLabel>Nom d'utilisateur</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          disabled={!isEditing || !!user?.username}
-                          placeholder="Nom d'utilisateur unique"
-                        />
+                        <Input {...field} disabled={!isEditing} placeholder="Nom d'utilisateur unique" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
