@@ -185,27 +185,27 @@ export default function Profile() {
             </h1>
 
             {/* Card principale */}
-            <Card className="max-w-2xl mx-auto shadow-lg">
-              <CardHeader className="bg-white">
-                <CardTitle className="text-2xl text-gray-900">
+            <Card className="w-full max-w-2xl mx-auto shadow-lg">
+              <CardHeader className="bg-white border-b border-gray-100">
+                <CardTitle className="text-xl sm:text-2xl text-gray-900">
                   Profil Utilisateur
                 </CardTitle>
-                <CardDescription className="text-gray-600">
+                <CardDescription className="text-gray-600 text-sm">
                   Consultez et mettez à jour vos informations personnelles
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="bg-white p-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  {/* Section Avatar */}
-                  <div className="flex flex-col items-center space-y-4">
-                    <Avatar className="h-24 w-24 border-4 border-gray-200">
+              <CardContent className="bg-white p-4 sm:p-6">
+                <div className="flex flex-col gap-6">
+                  {/* Section Avatar - Toujours en haut sur mobile */}
+                  <div className="flex flex-col items-center space-y-4 w-full">
+                    <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-gray-200">
                       <AvatarImage
                         src={photoURL || undefined}
                         alt={user?.displayName || user?.username || "Utilisateur"}
                         className="object-cover"
                       />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xl font-semibold">
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-lg sm:text-xl font-semibold">
                         {user?.displayName?.charAt(0)?.toUpperCase() ||
                           user?.username?.charAt(0)?.toUpperCase() ||
                           user?.email?.charAt(0)?.toUpperCase() ||
@@ -213,9 +213,29 @@ export default function Profile() {
                       </AvatarFallback>
                     </Avatar>
                     
-                    {/* Upload photo en mode édition */}
+                    {/* Informations utilisateur */}
+                    <div className="text-center space-y-2 w-full">
+                      <p className="font-semibold text-gray-900 text-base sm:text-lg">
+                        {user?.displayName || user?.username || "Utilisateur"}
+                      </p>
+                      <p className="text-sm text-gray-600 break-all">
+                        {user?.email || "Email non défini"}
+                      </p>
+                      {user?.balance !== undefined && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border max-w-xs mx-auto">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">
+                            Solde
+                          </p>
+                          <p className="font-bold text-lg text-green-600">
+                            {user.balance.toFixed(2)} €
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload photo en mode édition - Placé après les infos utilisateur */}
                     {isEditing && (
-                      <div className="w-full">
+                      <div className="w-full max-w-sm">
                         <label
                           htmlFor="profile-photo"
                           className="block text-center text-sm font-medium text-gray-700 mb-2"
@@ -231,43 +251,23 @@ export default function Profile() {
                         />
                       </div>
                     )}
-                    
-                    {/* Informations utilisateur */}
-                    <div className="text-center space-y-2">
-                      <p className="font-semibold text-gray-900 text-lg">
-                        {user?.displayName || user?.username || "Utilisateur"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {user?.email || "Email non défini"}
-                      </p>
-                      {user?.balance !== undefined && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">
-                            Solde
-                          </p>
-                          <p className="font-bold text-lg text-green-600">
-                            {user.balance.toFixed(2)} €
-                          </p>
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* Section Formulaire */}
-                  <div className="flex-1">
+                  <div className="w-full">
                     <Form {...form}>
                       <form
                         onSubmit={form.handleSubmit(handleSubmit)}
                         className="space-y-4"
                       >
                         {/* Prénom et Nom */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="firstName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-700">
+                                <FormLabel className="text-gray-700 text-sm font-medium">
                                   Prénom
                                 </FormLabel>
                                 <FormControl>
@@ -275,14 +275,14 @@ export default function Profile() {
                                     {...field}
                                     disabled={!isEditing}
                                     placeholder="Votre prénom"
-                                    className={`${
+                                    className={`transition-colors duration-200 ${
                                       !isEditing 
-                                        ? "bg-gray-50 text-gray-600" 
-                                        : "bg-white"
+                                        ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                        : "bg-white border-gray-300 focus:border-blue-500"
                                     }`}
                                   />
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-xs" />
                               </FormItem>
                             )}
                           />
@@ -291,7 +291,7 @@ export default function Profile() {
                             name="lastName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-700">
+                                <FormLabel className="text-gray-700 text-sm font-medium">
                                   Nom
                                 </FormLabel>
                                 <FormControl>
@@ -299,14 +299,14 @@ export default function Profile() {
                                     {...field}
                                     disabled={!isEditing}
                                     placeholder="Votre nom"
-                                    className={`${
+                                    className={`transition-colors duration-200 ${
                                       !isEditing 
-                                        ? "bg-gray-50 text-gray-600" 
-                                        : "bg-white"
+                                        ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                        : "bg-white border-gray-300 focus:border-blue-500"
                                     }`}
                                   />
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-xs" />
                               </FormItem>
                             )}
                           />
@@ -318,7 +318,7 @@ export default function Profile() {
                           name="displayName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700">
+                              <FormLabel className="text-gray-700 text-sm font-medium">
                                 Nom d'affichage
                               </FormLabel>
                               <FormControl>
@@ -326,14 +326,14 @@ export default function Profile() {
                                   {...field}
                                   disabled={!isEditing}
                                   placeholder="Nom affiché publiquement"
-                                  className={`${
+                                  className={`transition-colors duration-200 ${
                                     !isEditing 
-                                      ? "bg-gray-50 text-gray-600" 
-                                      : "bg-white"
+                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                      : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
@@ -344,7 +344,7 @@ export default function Profile() {
                           name="username"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700">
+                              <FormLabel className="text-gray-700 text-sm font-medium">
                                 Nom d'utilisateur
                               </FormLabel>
                               <FormControl>
@@ -352,14 +352,14 @@ export default function Profile() {
                                   {...field}
                                   disabled={!isEditing}
                                   placeholder="Nom d'utilisateur unique"
-                                  className={`${
+                                  className={`transition-colors duration-200 ${
                                     !isEditing 
-                                      ? "bg-gray-50 text-gray-600" 
-                                      : "bg-white"
+                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                      : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
@@ -370,7 +370,7 @@ export default function Profile() {
                           name="phone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700">
+                              <FormLabel className="text-gray-700 text-sm font-medium">
                                 Téléphone
                               </FormLabel>
                               <FormControl>
@@ -378,37 +378,39 @@ export default function Profile() {
                                   {...field}
                                   disabled={!isEditing}
                                   placeholder="Votre numéro de téléphone"
-                                  className={`${
+                                  className={`transition-colors duration-200 ${
                                     !isEditing 
-                                      ? "bg-gray-50 text-gray-600" 
-                                      : "bg-white"
+                                      ? "bg-gray-50 text-gray-600 border-gray-200" 
+                                      : "bg-white border-gray-300 focus:border-blue-500"
                                   }`}
                                 />
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
 
                         {/* Bouton de sauvegarde */}
                         {isEditing && (
-                          <Button
-                            type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={updateProfileMutation.isLoading}
-                          >
-                            {updateProfileMutation.isLoading ? (
-                              <>
-                                <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
-                                Mise à jour en cours...
-                              </>
-                            ) : (
-                              <>
-                                <Icons.save className="mr-2 h-4 w-4" />
-                                Enregistrer les modifications
-                              </>
-                            )}
-                          </Button>
+                          <div className="pt-4">
+                            <Button
+                              type="submit"
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
+                              disabled={updateProfileMutation.isLoading}
+                            >
+                              {updateProfileMutation.isLoading ? (
+                                <>
+                                  <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
+                                  Mise à jour en cours...
+                                </>
+                              ) : (
+                                <>
+                                  <Icons.save className="mr-2 h-4 w-4" />
+                                  Enregistrer les modifications
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         )}
                       </form>
                     </Form>
@@ -417,25 +419,33 @@ export default function Profile() {
               </CardContent>
               
               {/* Footer avec boutons d'action */}
-              <CardFooter className="bg-gray-50 flex justify-end space-x-2">
-                {!isEditing ? (
-                  <Button 
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Icons.pencil className="mr-2 h-4 w-4" />
-                    Modifier le profil
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(false)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    <Icons.x className="mr-2 h-4 w-4" />
-                    Annuler
-                  </Button>
-                )}
+              <CardFooter className="bg-gray-50 border-t border-gray-100 p-4 sm:p-6">
+                <div className="w-full flex justify-center sm:justify-end">
+                  {!isEditing ? (
+                    <Button 
+                      onClick={() => {
+                        console.log("Passage en mode édition");
+                        setIsEditing(true);
+                      }}
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
+                    >
+                      <Icons.pencil className="mr-2 h-4 w-4" />
+                      Modifier le profil
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        console.log("Annulation du mode édition");
+                        setIsEditing(false);
+                      }}
+                      className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50 font-medium px-6 py-2"
+                    >
+                      <Icons.x className="mr-2 h-4 w-4" />
+                      Annuler
+                    </Button>
+                  )}
+                </div>
               </CardFooter>
             </Card>
           </div>
