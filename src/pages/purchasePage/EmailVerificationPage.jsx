@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 import { useLocation } from "wouter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient"
 export default function EmailVerificationPage() {
     const [, navigate] = useLocation()
     const { toast } = useToast()
+    const isProcessingRef = useRef(false)
 
     // États pour gérer les étapes
     const [step, setStep] = useState('email') // 'email', 'code'
@@ -21,14 +22,18 @@ export default function EmailVerificationPage() {
     const [error, setError] = useState("")
 
     // Étape 1: Demander le code par email
-    const handleEmailSubmit = async (e) => {
+    const handleEmailSubmit = useCallback(async (e) => {
         e.preventDefault()
 
+        // Prévenir les doubles soumissions
+        if (isProcessingRef.current || isLoading) return
+        
         if (!email || !email.includes('@')) {
             setError("Veuillez saisir une adresse email valide")
             return
         }
 
+        isProcessingRef.current = true
         setIsLoading(true)
         setError("")
 
@@ -38,71 +43,95 @@ export default function EmailVerificationPage() {
             })
 
             if (response.success) {
-                toast({
-                    title: "Code envoyé",
-                    description: "Un code de vérification à 8 chiffres a été envoyé à votre email",
-                })
-                setStep('code')
+                // Utiliser setTimeout pour éviter les conflits de rendu
+                setTimeout(() => {
+                    if (isProcessingRef.current) {
+                        toast({
+                            title: "Code envoyé",
+                            description: "Un code de vérification à 8 chiffres a été envoyé à votre email",
+                        })
+                        setStep('code')
+                        isProcessingRef.current = false
+                    }
+                }, 50)
             } else {
                 setError("Erreur lors de l'envoi du code")
+                isProcessingRef.current = false
             }
         } catch (err) {
             setError("Erreur lors de l'envoi du code. Veuillez réessayer.")
             console.error("Request error:", err)
+            isProcessingRef.current = false
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [email, isLoading, toast])
 
     // Étape 2: Vérifier le code
-    const handleCodeVerification = async (e) => {
+    const handleCodeVerification = useCallback(async (e) => {
         e.preventDefault()
+
+        // Prévenir les doubles soumissions
+        if (isProcessingRef.current || isLoading) return
 
         if (!verificationCode || verificationCode.length !== 8) {
             setError("Le code de vérification doit contenir 8 chiffres")
             return
         }
 
+        isProcessingRef.current = true
         setIsLoading(true)
         setError("")
 
         try {
-            const response = await apiRequest("POST", "/api/auth/verify-email", {
+            const response = await apiRequest("POST", "/api/auth/verify-code", {
                 email,
                 verificationCode
             })
 
             if (response.success && response.accessToken) {
-                // Correction pour mobile - utiliser setTimeout pour éviter les problèmes de rendu
+                // Délai plus long pour mobile et gestion d'erreur renforcée
                 setTimeout(() => {
-                    try {
-                        localStorage.setItem('accessToken', response.accessToken)
-                        localStorage.setItem('userEmail', email)
+                    if (isProcessingRef.current) {
+                        try {
+                            localStorage.setItem('accessToken', response.accessToken)
+                            localStorage.setItem('userEmail', email)
 
-                        toast({
-                            title: "Vérification réussie",
-                            description: "Accès autorisé à vos achats",
-                        })
+                            toast({
+                                title: "Vérification réussie",
+                                description: "Accès autorisé à vos achats",
+                            })
 
-                        // Rediriger vers la page des achats
-                        navigate('/my-purchases')
-                    } catch (storageError) {
-                        console.error("Storage error:", storageError)
-                        setError("Erreur de stockage des données. Veuillez réessayer.")
+                            // Deuxième setTimeout pour la navigation
+                            setTimeout(() => {
+                                if (isProcessingRef.current) {
+                                    navigate('/my-purchases')
+                                    isProcessingRef.current = false
+                                }
+                            }, 100)
+                        } catch (storageError) {
+                            console.error("Storage error:", storageError)
+                            setError("Erreur de stockage des données. Veuillez réessayer.")
+                            isProcessingRef.current = false
+                        }
                     }
-                }, 100)
+                }, 150)
             } else {
                 setError("Code de vérification incorrect")
+                isProcessingRef.current = false
             }
         } catch (err) {
             setError("Erreur lors de la vérification. Veuillez réessayer.")
             console.error("Verification error:", err)
+            isProcessingRef.current = false
         } finally {
             setIsLoading(false)
         }
-    }
-
-    const resendCode = async () => {
+    }, [email, verificationCode, isLoading, toast, navigate])
+    
+    const resendCode = useCallback(async () => {
+        if (isProcessingRef.current) return
+        
         try {
             await apiRequest("POST", "/api/auth/request-verification", { email })
             toast({
@@ -116,13 +145,26 @@ export default function EmailVerificationPage() {
                 description: "Impossible de renvoyer le code",
             })
         }
-    }
+    }, [email, toast])
 
-    const goBackToEmail = () => {
+    const goBackToEmail = useCallback(() => {
+        if (isProcessingRef.current) return
+        
         setStep('email')
         setVerificationCode("")
         setError("")
-    }
+    }, [])
+
+    const handleEmailChange = useCallback((e) => {
+        setEmail(e.target.value)
+        setError("")
+    }, [])
+
+    const handleCodeChange = useCallback((e) => {
+        const value = e.target.value.replace(/\D/g, "").slice(0, 8)
+        setVerificationCode(value)
+        setError("")
+    }, [])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
@@ -161,10 +203,7 @@ export default function EmailVerificationPage() {
                                         type="email"
                                         placeholder="votre@email.com"
                                         value={email}
-                                        onChange={(e) => {
-                                            setEmail(e.target.value)
-                                            setError("")
-                                        }}
+                                        onChange={handleEmailChange}
                                         className={error ? "border-red-500" : ""}
                                     />
                                     {error && (
@@ -211,11 +250,7 @@ export default function EmailVerificationPage() {
                                         type="text"
                                         placeholder="12345678"
                                         value={verificationCode}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/\D/g, "").slice(0, 8)
-                                            setVerificationCode(value)
-                                            setError("")
-                                        }}
+                                        onChange={handleCodeChange}
                                         className={`text-center text-lg tracking-widest ${error ? "border-red-500" : ""}`}
                                         maxLength={8}
                                     />
@@ -252,6 +287,7 @@ export default function EmailVerificationPage() {
                                         variant="outline"
                                         onClick={resendCode}
                                         className="flex-1"
+                                        disabled={isLoading}
                                     >
                                         Renvoyer le code
                                     </Button>
@@ -259,6 +295,7 @@ export default function EmailVerificationPage() {
                                         variant="ghost"
                                         onClick={goBackToEmail}
                                         className="flex-1"
+                                        disabled={isLoading}
                                     >
                                         Changer l'email
                                     </Button>
