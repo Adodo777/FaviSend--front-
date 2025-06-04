@@ -16,6 +16,8 @@ import PaymentVerificationPage from "./components/PaymentVerification.jsx";
 import File from "@/pages/file";
 import Auth from "@/pages/auth";
 import Profile from "@/pages/profil";
+import EmailVerificationPage from "./pages/purchasePage/EmailVerificationPage.jsx";
+import MyPurchasesPage from "./pages/purchasePage/MyPurchasesPage.jsx";
 import { useIsMobile } from "./hooks/use-mobile";
 
 function Router() {
@@ -28,6 +30,8 @@ function Router() {
       <Route path="/auth" component={Auth}/>
       <Route path="/checkout/:fileId" component={CheckoutPage}/>
       <Route path="/payment-verification" component={PaymentVerificationPage}/>
+      <Route path="/email-verification" component={EmailVerificationPage}/>
+      <Route path="/my-purchases" component={MyPurchasesPage}/>
       <Route path="/profil" component={Profile}/>
       <Route path="*" component={NotFound} />
     </Switch>
