@@ -43,7 +43,7 @@ export default function MyPurchasesPage() {
         error,
     } = useQuery({
         queryKey: [`/api/purchase/list`],
-        queryFn: () => apiRequest("GET", `/api/purchase/list`, null, {
+        queryFn: () => apiRequest("GET", `/api/purchase/list`, userEmail, {
             Authorization: `Bearer ${accessToken}`
         }),
         enabled: !!accessToken,

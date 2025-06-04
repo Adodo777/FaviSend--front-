@@ -161,6 +161,8 @@ export const AuthProvider = ({ children }) => {
         title: "Déconnecté avec succès",
         description: "À bientôt!",
       });
+      // renvoyer l'utilisateur a la page d'accueil
+      window.location.href = "/";
     } catch (err) {
       console.error("Erreur de déconnexion:", err);
 
