@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -32,7 +32,6 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [photoURL, setPhotoURL] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
 
   // Initialisation de l'URL de la photo quand l'utilisateur est chargé
   useEffect(() => {
@@ -92,34 +91,14 @@ export default function Profile() {
     },
   });
 
-  const handleSubmit = useCallback((formData) => {
+  const handleSubmit = (formData) => {
     updateProfileMutation.mutate(formData);
-  }, [updateProfileMutation]);
+  };
 
-  const handlePhotoUpload = useCallback(async (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validation du fichier
-    if (file.size > 5 * 1024 * 1024) { // 5MB max
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "La taille du fichier ne doit pas dépasser 5MB.",
-      });
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez sélectionner un fichier image valide.",
-      });
-      return;
-    }
-
-    setIsUploading(true);
     const formData = new FormData();
     formData.append("photo", file);
 
@@ -148,25 +127,8 @@ export default function Profile() {
         title: "Erreur",
         description: `Impossible de télécharger la photo : ${error.message || error}`,
       });
-    } finally {
-      setIsUploading(false);
     }
-  }, [user?.id, toast]);
-
-  const handleEditToggle = useCallback(() => {
-    setIsEditing(prev => !prev);
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    form.reset({
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
-      username: user?.username || "",
-      displayName: user?.displayName || "",
-      phone: user?.phone || "",
-    });
-    setIsEditing(false);
-  }, [form, user]);
+  };
 
   // Affichage du loader pendant le chargement
   if (isLoading) {
@@ -227,28 +189,20 @@ export default function Profile() {
 
               <CardContent className="bg-white p-4 sm:p-6">
                 <div className="flex flex-col gap-6">
-                  {/* Section Avatar et informations de base */}
                   <div className="flex flex-col items-center space-y-4 w-full">
-                    <div className="relative">
-                      <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-gray-200">
-                        <AvatarImage
-                          src={photoURL || undefined}
-                          alt={user?.displayName || user?.username || "Utilisateur"}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg sm:text-xl font-semibold">
-                          {user?.displayName?.charAt(0)?.toUpperCase() ||
-                            user?.username?.charAt(0)?.toUpperCase() ||
-                            user?.email?.charAt(0)?.toUpperCase() ||
-                            "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isUploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
-                          <Icons.loader className="h-6 w-6 text-white animate-spin" />
-                        </div>
-                      )}
-                    </div>
+                    <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-gray-200">
+                      <AvatarImage
+                        src={photoURL || undefined}
+                        alt={user?.displayName || user?.username || "Utilisateur"}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-lg sm:text-xl font-semibold">
+                        {user?.displayName?.charAt(0)?.toUpperCase() ||
+                          user?.username?.charAt(0)?.toUpperCase() ||
+                          user?.email?.charAt(0)?.toUpperCase() ||
+                          "U"}
+                      </AvatarFallback>
+                    </Avatar>
 
                     <div className="text-center space-y-2 w-full">
                       <p className="font-semibold text-gray-900 text-base sm:text-lg">
@@ -269,35 +223,25 @@ export default function Profile() {
                       )}
                     </div>
 
-                    {/* Section upload photo - CORRECTION ICI */}
-                    <div className="w-full max-w-sm">
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="profile-photo"
-                            className="block text-center text-sm font-medium text-gray-700"
-                          >
-                            Modifier la photo
-                          </label>
-                          <Input
-                            id="profile-photo"
-                            type="file"
-                            accept="image/*"
-                            className="text-sm w-full"
-                            onChange={handlePhotoUpload}
-                            disabled={isUploading}
-                          />
-                          {isUploading && (
-                            <p className="text-xs text-center text-gray-500">
-                              Téléchargement en cours...
-                            </p>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
+                    {isEditing && (
+                      <div key="editing" className="w-full max-w-sm">
+                        <label
+                          htmlFor="profile-photo"
+                          className="block text-center text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Modifier la photo
+                        </label>
+                        <Input
+                          id="profile-photo"
+                          type="file"
+                          accept="image/*"
+                          className="text-sm w-full"
+                          onChange={handlePhotoUpload}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Section formulaire */}
                   <div className="w-full">
                     <Form {...form}>
                       <form
@@ -392,7 +336,7 @@ export default function Profile() {
                                 <Input
                                   {...field}
                                   disabled={!isEditing}
-                                  placeholder="Votre nom d'utilisateur"
+                                  placeholder="Nom d'utilisateur unique"
                                   className={`transition-colors duration-200 ${
                                     !isEditing
                                       ? "bg-gray-50 text-gray-600 border-gray-200"
@@ -418,7 +362,6 @@ export default function Profile() {
                                   {...field}
                                   disabled={!isEditing}
                                   placeholder="Votre numéro de téléphone"
-                                  type="tel"
                                   className={`transition-colors duration-200 ${
                                     !isEditing
                                       ? "bg-gray-50 text-gray-600 border-gray-200"
@@ -431,54 +374,55 @@ export default function Profile() {
                           )}
                         />
 
-                        {/* Boutons d'action */}
-                        <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                          {!isEditing ? (
+                        {isEditing && (
+                          <div className="pt-4">
                             <Button
-                              type="button"
-                              onClick={handleEditToggle}
-                              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                              type="submit"
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
+                              disabled={updateProfileMutation.isLoading}
                             >
-                              <Icons.edit className="mr-2 h-4 w-4" />
-                              Modifier
+                              {updateProfileMutation.isLoading ? (
+                                <>
+                                  <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
+                                  Mise à jour en cours...
+                                </>
+                              ) : (
+                                <>
+                                  <Icons.save className="mr-2 h-4 w-4" />
+                                  Enregistrer les modifications
+                                </>
+                              )}
                             </Button>
-                          ) : (
-                            <>
-                              <Button
-                                type="submit"
-                                disabled={updateProfileMutation.isPending}
-                                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                {updateProfileMutation.isPending ? (
-                                  <>
-                                    <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
-                                    Enregistrement...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Icons.check className="mr-2 h-4 w-4" />
-                                    Enregistrer
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleCancel}
-                                disabled={updateProfileMutation.isPending}
-                                className="w-full sm:w-auto"
-                              >
-                                <Icons.x className="mr-2 h-4 w-4" />
-                                Annuler
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </form>
                     </Form>
                   </div>
                 </div>
               </CardContent>
+
+              <CardFooter className="bg-gray-50 border-t border-gray-100 p-4 sm:p-6">
+                <div className="w-full flex justify-center sm:justify-end">
+                  {!isEditing ? (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
+                    >
+                      <Icons.pencil className="mr-2 h-4 w-4" />
+                      Modifier le profil
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                      className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50 font-medium px-6 py-2"
+                    >
+                      <Icons.x className="mr-2 h-4 w-4" />
+                      Annuler
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
             </Card>
           </div>
         </div>
