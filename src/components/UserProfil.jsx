@@ -123,7 +123,7 @@ const UserProfile = () => {
           {/* Avatar et photo */}
           <div className="flex flex-col items-center">
             <Avatar className="h-24 w-24 mb-4">
-              <AvatarImage src={photoURL || undefined} alt={user?.displayName || user?.username} />
+              <AvatarImage src={photoURL || undefined} alt={user?.displayName || user?.username || "Utilisateur"} />
               <AvatarFallback>
                 {user?.displayName?.charAt(0).toUpperCase() ||
                   user?.username?.charAt(0).toUpperCase() ||
@@ -148,8 +148,8 @@ const UserProfile = () => {
               </div>
             )}
             <div className="mt-4 text-center">
-              <p className="font-semibold">{user?.displayName || user?.username}</p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
+              <p className="font-semibold">{user?.displayName || user?.username || "Utilisateur"}</p>
+              <p className="text-sm text-gray-500">{user?.email || "Email non défini"}</p>
               {user?.balance !== undefined && (
                 <div className="mt-2 p-2 bg-gray-100 rounded-md">
                   <p className="text-sm text-gray-600">Solde</p>
