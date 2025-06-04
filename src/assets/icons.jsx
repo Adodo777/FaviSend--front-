@@ -6,6 +6,7 @@ import {
   Home, 
   User, 
   Menu, 
+  Edit,
   X, 
   Star,
   Save,
@@ -48,6 +49,7 @@ import {
 export const Icons = {
   logo: Send,
   send: Send,
+  edit: Edit,
   upload: Upload,
   download: Download,
   compass: Compass,
