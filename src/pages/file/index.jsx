@@ -39,7 +39,7 @@ export default function File() {
   const publishComment = useCallback(
     async (commentData) => {
       try {
-        await apiRequest("POST", `/api/files/comment`, commentData)
+        await apiRequest("POST", `/api/files/comment/${user.id}`, commentData)
 
         queryClient.invalidateQueries({ queryKey: [`/api/files/detail/${fileId}`] })
         setComment("")
