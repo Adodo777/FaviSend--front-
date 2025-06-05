@@ -101,6 +101,7 @@ export default function Profile() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    console.log("Fichier sélectionné :", file);
 
     const formData = new FormData();
     formData.append("photo", file);
