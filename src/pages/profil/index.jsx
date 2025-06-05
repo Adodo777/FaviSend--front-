@@ -32,6 +32,17 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [photoURL, setPhotoURL] = useState("");
+  const [isFormReady, setIsFormReady] = useState(false); // Nouvel état pour différer le remplissage
+
+  const form = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      displayName: "",
+      phone: "",
+    },
+  });
 
   // Initialisation de l'URL de la photo quand l'utilisateur est chargé
   useEffect(() => {
@@ -47,19 +58,9 @@ export default function Profile() {
     }
   }, [isLoading, user, setLocation]);
 
-  const form = useForm({
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      username: "",
-      displayName: "",
-      phone: "",
-    },
-  });
-
   // Mise à jour des valeurs par défaut du formulaire quand l'utilisateur change
   useEffect(() => {
-    if (user) {
+    if (user && !isEditing) {
       form.reset({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -67,8 +68,9 @@ export default function Profile() {
         displayName: user.displayName || "",
         phone: user.phone || "",
       });
+      setIsFormReady(true); // Marque le formulaire comme prêt
     }
-  }, [user, form]);
+  }, [user, form, isEditing]);
 
   const updateProfileMutation = useMutation({
     mutationFn: (userData) =>
@@ -133,7 +135,7 @@ export default function Profile() {
   };
 
   // Affichage du loader pendant le chargement
-  if (isLoading) {
+  if (isLoading || !isFormReady) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
