@@ -202,16 +202,23 @@ export default function File() {
           {fileData.comments && fileData.comments.length > 0 ? (
             <div className="space-y-4">
               {fileData.comments.map((comment) => (
-                <Card key={comment.id} className="overflow-hidden">
+                <Card key={comment._id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start">
                       <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
-                        <AvatarImage src={comment.user.photoURL || undefined} alt={comment.user.displayName} />
-                        <AvatarFallback>{comment.user.displayName?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                        <AvatarImage
+                          src={comment.userId?.photoURL || "https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ="} // Image par défaut
+                          alt={comment.userId?.displayName || "Utilisateur"}
+                        />
+                        <AvatarFallback>
+                          {comment.userId?.displayName?.charAt(0).toUpperCase() || "U"}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between flex-wrap gap-2">
-                          <h4 className="font-medium text-sm truncate">{comment.user.displayName}</h4>
+                          <h4 className="font-medium text-sm truncate">
+                            {comment.userId?.displayName || comment.userId?.username || "Utilisateur"}
+                          </h4>
                           <span className="text-xs text-gray-500 flex-shrink-0">
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: fr })}
                           </span>
