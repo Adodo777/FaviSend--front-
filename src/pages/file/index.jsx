@@ -58,7 +58,7 @@ export default function File() {
         })
       }
     },
-    [fileId, toast],
+    [fileId, toast, user],
   )
 
   const commentMutation = useMutation({
