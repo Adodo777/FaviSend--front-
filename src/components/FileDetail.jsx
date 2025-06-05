@@ -10,6 +10,16 @@ import { fr } from "date-fns/locale";
 export default function FileDetail({ file, onCheckout }) {
   const [copied, setCopied] = useState(false);
 
+  // Fonction pour calculer la note moyenne
+  const calculateAverageRating = (comments) => {
+    if (!comments || comments.length === 0) return 0; // Pas de commentaires, note moyenne = 0
+    const totalRating = comments.reduce((sum, comment) => sum + (comment.rating || 0), 0);
+    return totalRating / comments.length;
+  };
+
+  // Calcul de la note moyenne
+  const averageRating = calculateAverageRating(file.comments);
+
   const getFileIcon = (fileType) => {
     if (fileType.includes('pdf')) return <Icons.filePdf className="text-red-600 h-12 w-12" />;
     if (fileType.includes('image')) return <Icons.fileImage className="text-blue-600 h-12 w-12" />;
@@ -106,11 +116,11 @@ export default function FileDetail({ file, onCheckout }) {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Icons.starFill
                         key={i}
-                        className={`h-4 w-4 ${i < Math.floor(file.rating) ? 'text-yellow-400' : 'text-gray-200'}`}
+                        className={`h-4 w-4 ${i < Math.floor(averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}
                       />
                     ))}
                   </div>
-                  <span className="font-medium">{file.rating.toFixed(1)}</span>
+                  <span className="font-medium">{averageRating.toFixed(1)}</span>
                 </div>
               </div>
               <div className="bg-gray-50 p-3 rounded-lg">
