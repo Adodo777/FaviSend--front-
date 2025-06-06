@@ -44,7 +44,7 @@ export default function MobileNavBar() {
           </div>
         </Link>
       ) : (
-        <Link href="/dashboard">
+        <Link href="/auth">
           <div className="flex flex-col items-center text-gray-500">
             <Icons.user className="text-xl" />
             <span className="text-xs">Connexion</span>

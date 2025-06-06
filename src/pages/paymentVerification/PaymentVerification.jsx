@@ -1,18 +1,13 @@
 
 import { useQuery } from "@tanstack/react-query"
-import { useLocation } from "wouter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, XCircle, Clock, Download, Mail } from "lucide-react"
 import { apiRequest } from "@/lib/queryClient"
 import { Link } from "wouter"
-import axios from "axios"
-import { useToast } from "@/hooks/use-toast"
 
 export default function PaymentVerificationPage() {
-    const { toast } = useToast()
-    const [location] = useLocation()
     
     const searchParams = new URLSearchParams(window.location.search)
     const paymentId = searchParams.get("paymentId")

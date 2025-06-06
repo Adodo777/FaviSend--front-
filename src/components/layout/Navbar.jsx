@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { Icons } from "@/assets/icons";
@@ -16,6 +16,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef(null); // Référence pour le menu
+
+  // Gestion des clics en dehors du menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMobileMenuOpen(false); // Fermer le menu si on clique en dehors
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
@@ -71,7 +86,7 @@ export default function Navbar() {
                 </Button>
               </Link>
                 
-              <Link href="/auth">
+              <Link href="/auth?register=true">
                 <Button
                   className="px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
                 >
@@ -95,7 +110,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div ref={menuRef} className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1">
           <Link href="/explore" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">
             Explorer
@@ -127,7 +142,7 @@ export default function Navbar() {
                   Se connecter
                 </Button>
               </Link>
-              <Link href="/auth" className="w-full">
+              <Link href="/auth?register=true" className="w-full">
                 <Button
                   className="w-full mt-2 px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
                 >

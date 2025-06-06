@@ -12,7 +12,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Explore from "@/pages/explore";
 import CheckoutPage from "./pages/checkout";
-import PaymentVerificationPage from "./components/PaymentVerification.jsx";
+import PaymentVerificationPage from "./pages/paymentVerification/PaymentVerification.jsx";
 import File from "@/pages/file";
 import Auth from "@/pages/auth";
 import Profile from "@/pages/profil";
@@ -23,17 +23,17 @@ import { useIsMobile } from "./hooks/use-mobile";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home}/>
-      <Route path="/dashboard" component={Dashboard}/>
-      <Route path="/explore" component={Explore}/>
-      <Route path="/file/:id" component={File}/>
-      <Route path="/auth" component={Auth}/>
-      <Route path="/checkout/:fileId" component={CheckoutPage}/>
-      <Route path="/payment-verification" component={PaymentVerificationPage}/>
-      <Route path="/email-verification" component={EmailVerificationPage}/>
-      <Route path="/my-purchases" component={MyPurchasesPage}/>
-      <Route path="/profil" component={Profile}/>
-      <Route path="*" component={NotFound} />
+      <Route path="/" component={Home} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/explore" component={Explore} />
+      <Route path="/file/:id" component={File} />
+      <Route path="/auth" component={Auth} />
+      <Route path="/checkout/:fileId" component={CheckoutPage} />
+      <Route path="/payment-verification" component={PaymentVerificationPage} />
+      <Route path="/email-verification" component={EmailVerificationPage} />
+      <Route path="/my-purchases" component={MyPurchasesPage} />
+      <Route path="/profil" component={Profile} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
@@ -46,7 +46,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col min-h-[100dvh]">
             <Navbar />
             <main className="flex-grow">
               <Router />
