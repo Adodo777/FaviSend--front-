@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Icons } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +9,8 @@ import { fr } from "date-fns/locale";
 
 export default function FileDetail({ file }) {
   const [copied, setCopied] = useState(false);
+  const isMounted = useRef(true);
+
   const onCheckout = () => {
     //navigate to checkout page with file details
     window.location.href = `/checkout/${file.id}`;
@@ -54,13 +56,31 @@ export default function FileDetail({ file }) {
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
 
+  useEffect(() => {
+    return () => {
+      isMounted.current = false; // Marque le composant comme démonté
+    };
+  }, []);
+
   const copyShareLink = async () => {
     try {
+      if (!navigator.clipboard) {
+        throw new Error("L'API Clipboard n'est pas disponible sur ce navigateur.");
+      }
+
       await navigator.clipboard.writeText(`${window.location.origin}/file/${file.id}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (isMounted.current) {
+        setCopied(true);
+      }
+
+      setTimeout(() => {
+        if (isMounted.current) {
+          setCopied(false);
+        }
+      }, 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error('Erreur lors de la copie :', err);
+      alert("Impossible de copier automatiquement. Veuillez copier manuellement : " + `${window.location.origin}/file/${file.id}`);
     }
   };
 
