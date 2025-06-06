@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+
+import { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Icons } from "@/assets/icons";
+import { ArrowLeft, Send, Loader, Star, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,13 +22,14 @@ export default function File() {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileId = params?.id;
 
   const {
     data: fileData,
     isLoading,
     error,
-    refetch, // Utilisation de refetch pour recharger les données
+    refetch,
   } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     queryFn: async () => {
@@ -35,41 +37,6 @@ export default function File() {
       return response;
     },
     enabled: !!fileId,
-  });
-
-  // Fonction async pour publier un commentaire
-  const publishComment = useCallback(
-    async (commentData) => {
-      try {
-        await apiRequest("POST", `/api/files/comment/${user.id}`, commentData);
-
-        // Utiliser refetch pour recharger les données après la publication
-        await refetch();
-
-        setComment("");
-        setRating(0);
-
-        toast({
-          title: "Commentaire publié",
-          description: "Votre commentaire a été publié avec succès.",
-        });
-      } catch (error) {
-        console.error("Erreur lors de la publication du commentaire:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: `Impossible de publier le commentaire: ${error.message || error}`,
-        });
-      }
-    },
-    [refetch, toast, user]
-  );
-
-  const commentMutation = useMutation({
-    mutationFn: publishComment,
-    onError: (error) => {
-      console.error("Mutation comment error:", error);
-    },
   });
 
   // Gestion des erreurs de fichier
@@ -85,94 +52,72 @@ export default function File() {
   }, [error, toast, setLocation]);
 
   // Fonction pour rediriger vers le checkout
-  const handleCheckout = useCallback(() => {
+  const handleCheckout = () => {
     setLocation(`/checkout/${fileId}`);
-  }, [fileId, setLocation]);
+  };
 
-  const handleCommentSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
 
-      // Validation des champs
-      if (!fileData || !comment.trim() || rating === 0) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Veuillez remplir tous les champs requis.",
-        });
-        return;
-      }
+    // Validation des champs
+    if (!fileData || !comment.trim() || rating === 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs requis.",
+      });
+      return;
+    }
 
-      if (!user) {
-        toast({
-          title: "Connexion requise",
-          description: "Vous devez être connecté pour laisser un commentaire.",
-        });
-        setLocation("/auth");
-        return;
-      }
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour laisser un commentaire.",
+      });
+      setLocation("/auth");
+      return;
+    }
 
-      // Optimistic Update
-      const optimisticComment = {
-        _id: `tmp-${Date.now()}`,
+    setIsSubmitting(true);
+
+    try {
+      await apiRequest("POST", `/api/files/comment/${user.id}`, {
+        fileId: fileData.id,
         comment: comment.trim(),
         rating,
-        createdAt: new Date().toISOString(),
-        userId: {
-          displayName: user.displayName || user.username || "Vous",
-          photoURL: user.photoURL || null,
-        },
-      };
+      });
 
-      setLocalComments((prev) => [optimisticComment, ...prev]);
+      // Recharger les données
+      await refetch();
 
-      try {
-        // Envoi du commentaire au backend
-        const newComment = await apiRequest("POST", `/api/files/comment/${user.id}`, {
-          fileId: fileData.id,
-          comment: comment.trim(),
-          rating,
-        });
+      setComment("");
+      setRating(0);
 
-        // Mise à jour des commentaires avec la réponse du backend
-        setLocalComments((prev) =>
-          prev.map((c) => (c._id === optimisticComment._id ? newComment : c))
-        );
-
-        toast({
-          title: "Commentaire publié",
-          description: "Votre commentaire a été publié avec succès.",
-        });
-      } catch (error) {
-        // Rollback en cas d'échec
-        setLocalComments((prev) =>
-          prev.filter((c) => c._id !== optimisticComment._id)
-        );
-
-        console.error("Erreur lors de la publication du commentaire:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: `Impossible de publier le commentaire : ${error.message || "Erreur inconnue."}`,
-        });
-      } finally {
-        // Réinitialisation des champs
-        setComment("");
-        setRating(0);
-      }
-    },
-    [fileData, comment, rating, user, setLocation, toast]
-  );
+      toast({
+        title: "Commentaire publié",
+        description: "Votre commentaire a été publié avec succès.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la publication du commentaire:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de publier le commentaire : ${error.message || "Erreur inconnue."}`,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Loading state optimisé pour mobile
   if (isLoading) {
     return (
-      <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin">
-            <Icons.loader className="h-8 w-8 text-primary" />
+            <Loader className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-sm text-gray-600">Chargement du fichier...</p>
+          <p className="text-sm text-muted-foreground">Chargement du fichier...</p>
         </div>
       </div>
     );
@@ -181,7 +126,7 @@ export default function File() {
   if (!fileData) return null;
 
   return (
-    <div className="pt-20 pb-16 bg-gray-50 min-h-screen">
+    <div className="pt-20 pb-16 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <Button
@@ -189,7 +134,7 @@ export default function File() {
             onClick={() => setLocation("/explore")}
             className="mb-4"
           >
-            <Icons.arrowLeft className="mr-2 h-4 w-4" /> Retour à l'exploration
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à l'exploration
           </Button>
 
           <FileDetail file={fileData} onCheckout={handleCheckout} />
@@ -197,7 +142,7 @@ export default function File() {
 
         {/* Comments section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-heading font-semibold mb-6">
+          <h2 className="text-2xl font-semibold mb-6">
             Commentaires et avis
           </h2>
 
@@ -218,11 +163,13 @@ export default function File() {
                           onMouseLeave={() => setHoverRating(0)}
                           onClick={() => setRating(star)}
                         >
-                          {(hoverRating || rating) >= star ? (
-                            <Icons.starFill className="h-5 w-5 text-yellow-400" />
-                          ) : (
-                            <Icons.star className="h-5 w-5 text-gray-300" />
-                          )}
+                          <Star 
+                            className={`h-5 w-5 ${
+                              (hoverRating || rating) >= star 
+                                ? "text-yellow-400 fill-current" 
+                                : "text-muted-foreground"
+                            }`}
+                          />
                         </button>
                       ))}
                     </div>
@@ -238,19 +185,17 @@ export default function File() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={
-                    !comment.trim() || rating === 0 || commentMutation.isPending
-                  }
+                  disabled={!comment.trim() || rating === 0 || isSubmitting}
                   className="w-full md:w-auto"
                 >
-                  {commentMutation.isPending ? (
+                  {isSubmitting ? (
                     <>
-                      <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
                       Publication en cours...
                     </>
                   ) : (
                     <>
-                      <Icons.send className="mr-2 h-4 w-4" />
+                      <Send className="mr-2 h-4 w-4" />
                       Publier un commentaire
                     </>
                   )}
@@ -286,7 +231,7 @@ export default function File() {
                               comment.userId?.username ||
                               "Utilisateur"}
                           </h4>
-                          <span className="text-xs text-gray-500 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
                             {formatDistanceToNow(
                               new Date(comment.createdAt),
                               { addSuffix: true, locale: fr }
@@ -295,16 +240,17 @@ export default function File() {
                         </div>
                         <div className="flex mt-1 mb-2">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <Icons.starFill
+                            <Star
                               key={i}
-                              className={`h-4 w-4 ${i < comment.rating
-                                  ? "text-yellow-400"
-                                  : "text-gray-200"
-                                }`}
+                              className={`h-4 w-4 ${
+                                i < comment.rating
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-muted-foreground"
+                              }`}
                             />
                           ))}
                         </div>
-                        <p className="text-gray-700 text-sm break-words">
+                        <p className="text-foreground text-sm break-words">
                           {comment.comment}
                         </p>
                       </div>
@@ -316,9 +262,9 @@ export default function File() {
           ) : (
             <Card>
               <CardContent className="p-6 text-center">
-                <Icons.messageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium">Aucun commentaire</h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Soyez le premier à laisser votre avis sur ce fichier!
                 </p>
               </CardContent>
