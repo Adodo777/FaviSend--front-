@@ -21,15 +21,13 @@ export default function File() {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [localComments, setLocalComments] = useState([]);
   const fileId = params?.id;
 
-  // Récupération des données du fichier
   const {
     data: fileData,
     isLoading,
     error,
-    refetch,
+    refetch, // Utilisation de refetch pour recharger les données
   } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     queryFn: async () => {
@@ -37,19 +35,16 @@ export default function File() {
       return response;
     },
     enabled: !!fileId,
-    onSuccess: (data) => {
-      setLocalComments(data.comments || []); // Synchronisation des commentaires locaux
-    },
   });
 
-  // Fonction pour publier un commentaire
+  // Fonction async pour publier un commentaire
   const publishComment = useCallback(
     async (commentData) => {
       try {
-        const newComment = await apiRequest("POST", `/api/files/comment/${user.id}`, commentData);
+        await apiRequest("POST", `/api/files/comment/${user.id}`, commentData);
 
-        // Mise à jour locale des commentaires
-        setLocalComments((prev) => [newComment, ...prev]);
+        // Utiliser refetch pour recharger les données après la publication
+        await refetch();
 
         setComment("");
         setRating(0);
@@ -63,11 +58,11 @@ export default function File() {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: `Impossible de publier le commentaire : ${error.message || "Erreur inconnue."}`,
+          description: `Impossible de publier le commentaire: ${error.message || error}`,
         });
       }
     },
-    [toast, user]
+    [refetch, toast, user]
   );
 
   const commentMutation = useMutation({
@@ -94,7 +89,6 @@ export default function File() {
     setLocation(`/checkout/${fileId}`);
   }, [fileId, setLocation]);
 
-  // Gestion de la soumission du commentaire
   const handleCommentSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -118,17 +112,59 @@ export default function File() {
         return;
       }
 
-      // Publication du commentaire
-      await commentMutation.mutateAsync({
-        fileId: fileData.id,
+      // Optimistic Update
+      const optimisticComment = {
+        _id: `tmp-${Date.now()}`,
         comment: comment.trim(),
         rating,
-      });
+        createdAt: new Date().toISOString(),
+        userId: {
+          displayName: user.displayName || user.username || "Vous",
+          photoURL: user.photoURL || null,
+        },
+      };
+
+      setLocalComments((prev) => [optimisticComment, ...prev]);
+
+      try {
+        // Envoi du commentaire au backend
+        const newComment = await apiRequest("POST", `/api/files/comment/${user.id}`, {
+          fileId: fileData.id,
+          comment: comment.trim(),
+          rating,
+        });
+
+        // Mise à jour des commentaires avec la réponse du backend
+        setLocalComments((prev) =>
+          prev.map((c) => (c._id === optimisticComment._id ? newComment : c))
+        );
+
+        toast({
+          title: "Commentaire publié",
+          description: "Votre commentaire a été publié avec succès.",
+        });
+      } catch (error) {
+        // Rollback en cas d'échec
+        setLocalComments((prev) =>
+          prev.filter((c) => c._id !== optimisticComment._id)
+        );
+
+        console.error("Erreur lors de la publication du commentaire:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: `Impossible de publier le commentaire : ${error.message || "Erreur inconnue."}`,
+        });
+      } finally {
+        // Réinitialisation des champs
+        setComment("");
+        setRating(0);
+      }
     },
-    [fileData, comment, rating, user, commentMutation, toast, setLocation]
+    [fileData, comment, rating, user, setLocation, toast]
   );
 
-  // Affichage du chargement
+  // Loading state optimisé pour mobile
   if (isLoading) {
     return (
       <div className="pt-20 pb-16 flex items-center justify-center min-h-screen bg-gray-50">
@@ -159,11 +195,13 @@ export default function File() {
           <FileDetail file={fileData} onCheckout={handleCheckout} />
         </div>
 
-        {/* Section des commentaires */}
+        {/* Comments section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-heading font-semibold mb-6">Commentaires et avis</h2>
+          <h2 className="text-2xl font-heading font-semibold mb-6">
+            Commentaires et avis
+          </h2>
 
-          {/* Formulaire de commentaire */}
+          {/* Comment form */}
           <Card className="mb-8">
             <CardContent className="pt-6">
               <form onSubmit={handleCommentSubmit}>
@@ -200,7 +238,9 @@ export default function File() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={!comment.trim() || rating === 0 || commentMutation.isPending}
+                  disabled={
+                    !comment.trim() || rating === 0 || commentMutation.isPending
+                  }
                   className="w-full md:w-auto"
                 >
                   {commentMutation.isPending ? (
@@ -219,10 +259,10 @@ export default function File() {
             </CardContent>
           </Card>
 
-          {/* Liste des commentaires */}
-          {localComments.length > 0 ? (
+          {/* Comments list */}
+          {fileData.comments && fileData.comments.length > 0 ? (
             <div className="space-y-4">
-              {localComments.map((comment) => (
+              {fileData.comments.map((comment) => (
                 <Card key={comment._id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start">
@@ -235,27 +275,38 @@ export default function File() {
                           alt={comment.userId?.displayName || "Utilisateur"}
                         />
                         <AvatarFallback>
-                          {comment.userId?.displayName?.charAt(0).toUpperCase() || "U"}
+                          {comment.userId?.displayName?.charAt(0).toUpperCase() ||
+                            "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <h4 className="font-medium text-sm truncate">
-                            {comment.userId?.displayName || comment.userId?.username || "Utilisateur"}
+                            {comment.userId?.displayName ||
+                              comment.userId?.username ||
+                              "Utilisateur"}
                           </h4>
                           <span className="text-xs text-gray-500 flex-shrink-0">
-                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: fr })}
+                            {formatDistanceToNow(
+                              new Date(comment.createdAt),
+                              { addSuffix: true, locale: fr }
+                            )}
                           </span>
                         </div>
                         <div className="flex mt-1 mb-2">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Icons.starFill
                               key={i}
-                              className={`h-4 w-4 ${i < comment.rating ? "text-yellow-400" : "text-gray-200"}`}
+                              className={`h-4 w-4 ${i < comment.rating
+                                  ? "text-yellow-400"
+                                  : "text-gray-200"
+                                }`}
                             />
                           ))}
                         </div>
-                        <p className="text-gray-700 text-sm break-words">{comment.comment}</p>
+                        <p className="text-gray-700 text-sm break-words">
+                          {comment.comment}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
