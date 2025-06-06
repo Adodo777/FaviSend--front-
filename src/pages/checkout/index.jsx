@@ -1,27 +1,26 @@
-
-import { useState, useEffect } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { useAuth } from "@/lib/auth"
-import { useLocation, useRoute } from "wouter"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { apiRequest } from "@/lib/queryClient"
-import { FileText, ImageIcon, Video, Music, Archive, ArrowLeft, CreditCard, User, UserX } from "lucide-react"
-import { Link } from "wouter"
-import { useForm } from "react-hook-form"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useLocation, useRoute } from "wouter";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { FileText, ImageIcon, Video, Music, Archive, ArrowLeft, CreditCard, User, UserX } from "lucide-react";
+import { Link } from "wouter";
+import { useForm } from "react-hook-form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const getFileIcon = (fileType) => {
-  if (fileType.startsWith("image/")) return <ImageIcon className="h-8 w-8" />
-  if (fileType.startsWith("video/")) return <Video className="h-8 w-8" />
-  if (fileType.startsWith("audio/")) return <Music className="h-8 w-8" />
-  if (fileType.includes("zip") || fileType.includes("rar")) return <Archive className="h-8 w-8" />
-  return <FileText className="h-8 w-8" />
-}
+  if (fileType.startsWith("image/")) return <ImageIcon className="h-8 w-8" />;
+  if (fileType.startsWith("video/")) return <Video className="h-8 w-8" />;
+  if (fileType.startsWith("audio/")) return <Music className="h-8 w-8" />;
+  if (fileType.includes("zip") || fileType.includes("rar")) return <Archive className="h-8 w-8" />;
+  return <FileText className="h-8 w-8" />;
+};
 
 const countries = [
   "Burkina Faso",
@@ -38,58 +37,56 @@ const countries = [
   "République centrafricaine",
   "Congo",
   "République démocratique du Congo",
-]
+];
 
 // Validation des champs
 const validateForm = (values) => {
-  const errors = {}
+  const errors = {};
 
   if (!values.firstName || values.firstName.length < 2) {
-    errors.firstName = "Le prénom doit contenir au moins 2 caractères"
+    errors.firstName = "Le prénom doit contenir au moins 2 caractères";
   }
 
   if (!values.lastName || values.lastName.length < 2) {
-    errors.lastName = "Le nom doit contenir au moins 2 caractères"
+    errors.lastName = "Le nom doit contenir au moins 2 caractères";
   }
 
   if (!values.phoneNumber || values.phoneNumber.length < 8) {
-    errors.phoneNumber = "Le numéro de téléphone doit contenir au moins 8 chiffres"
+    errors.phoneNumber = "Le numéro de téléphone doit contenir au moins 8 chiffres";
   }
 
   if (!values.country) {
-    errors.country = "Veuillez sélectionner un pays"
+    errors.country = "Veuillez sélectionner un pays";
   }
 
   if (!values.city || values.city.length < 2) {
-    errors.city = "La ville doit contenir au moins 2 caractères"
+    errors.city = "La ville doit contenir au moins 2 caractères";
   }
 
-  return errors
-}
+  return errors;
+};
 
 export default function CheckoutPage() {
-  const [, params] = useRoute("/checkout/:fileId")
-  const { user, isLoading: authLoading } = useAuth()
-  const [, navigate] = useLocation()
-  const { toast } = useToast()
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [formErrors, setFormErrors] = useState({})
+  const [, params] = useRoute("/checkout/:fileId");
+  const { user, isLoading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   // Récupérer l'ID du fichier depuis l'URL
-  const fileId = params?.fileId
+  const fileId = params?.fileId;
 
   // Vérifier s'il y a un paymentId dans l'URL et rediriger vers la page de vérification
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const paymentIdFromUrl = searchParams.get("paymentId")
-    
+    const searchParams = new URLSearchParams(window.location.search);
+    const paymentIdFromUrl = searchParams.get("paymentId");
+
     if (paymentIdFromUrl) {
       // Rediriger vers la page de vérification de paiement
-      navigate(`/payment-verification?paymentId=${paymentIdFromUrl}`)
+      navigate(`/payment-verification?paymentId=${paymentIdFromUrl}`);
     }
-  }, [navigate])
-
-  console.log("CheckoutPage: fileId =", fileId)
+  }, [navigate]);
 
   const form = useForm({
     defaultValues: {
@@ -100,21 +97,21 @@ export default function CheckoutPage() {
       city: "",
       email: "",
     },
-  })
+  });
 
   // Pré-remplir le formulaire si l'utilisateur est connecté
   useEffect(() => {
     if (user && !authLoading) {
-      form.setValue("firstName", user.firstName || "")
-      form.setValue("lastName", user.lastName || "")
-      form.setValue("email", user.email || "")
-
-      // Si l'utilisateur a des informations de profil, les utiliser
-      form.setValue("phoneNumber", user.phoneNumber || "")
-      form.setValue("country", user.country || "")
-      form.setValue("city", user.city || "")
+      form.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        country: user.country || "",
+        city: user.city || "",
+      });
     }
-  }, [user, authLoading, form])
+  }, [user, authLoading]);
 
   const {
     data,
@@ -123,7 +120,7 @@ export default function CheckoutPage() {
   } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     enabled: !!fileId,
-  })
+  });
 
   const file = data;
 
@@ -132,29 +129,27 @@ export default function CheckoutPage() {
       const response = await apiRequest("POST", "/api/purchase/init", {
         fileId: fileId,
         ...values,
-        userId: user?.id || null, // Inclure l'ID utilisateur si connecté
-        isGuestPurchase: !user, // Indiquer si c'est un achat invité
-      })
-      return response
+        userId: user?.id || null,
+        isGuestPurchase: !user,
+      });
+      return response;
     },
     onSuccess: (data) => {
       toast({
         title: "Paiement initié",
         description: "Vous allez être redirigé vers Moneroo pour finaliser le paiement",
-      })
+      });
 
-      // Redirection vers Moneroo ou autre processeur de paiement
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
+        window.location.href = data.checkoutUrl;
       } else {
-        // Simulation de redirection
         setTimeout(() => {
           if (user) {
-            navigate(`/purchases`)
+            navigate(`/purchases`);
           } else {
-            navigate(`/purchase-confirmation?orderId=${data.orderId}`)
+            navigate(`/purchase-confirmation?orderId=${data.orderId}`);
           }
-        }, 2000)
+        }, 2000);
       }
     },
     onError: (error) => {
@@ -162,31 +157,31 @@ export default function CheckoutPage() {
         title: "Erreur de paiement",
         description: error.message || "Une erreur est survenue lors du traitement du paiement",
         variant: "destructive",
-      })
+      });
     },
-  })
+  });
 
   const onSubmit = async (values) => {
     // Validation côté client
-    const errors = validateForm(values)
-    setFormErrors(errors)
+    const errors = validateForm(values);
+    setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Erreurs dans le formulaire",
         description: "Veuillez corriger les erreurs avant de continuer",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsProcessing(true)
+    setIsProcessing(true);
     try {
-      await paymentMutation.mutateAsync(values)
+      await paymentMutation.mutateAsync(values);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   if (fileLoading) {
     return (
@@ -196,7 +191,7 @@ export default function CheckoutPage() {
           <p className="mt-4 text-gray-600">Chargement...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!fileId || error || !file) {
@@ -216,7 +211,7 @@ export default function CheckoutPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -230,41 +225,6 @@ export default function CheckoutPage() {
             </Button>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Finaliser l'achat</h1>
-        </div>
-
-        {/* Statut de connexion */}
-        <div className="mb-6">
-          {authLoading ? (
-            <Alert>
-              <AlertDescription>Vérification du statut de connexion...</AlertDescription>
-            </Alert>
-          ) : user ? (
-            <Alert className="border-green-200 bg-green-50">
-              <User className="h-4 w-4" />
-              <AlertDescription className="text-green-800">
-                Connecté en tant que <strong>{user.displayName || user.username}</strong>
-                {" - "}
-                <Link href="/auth">
-                  <Button variant="link" className="p-0 h-auto text-green-700 underline">
-                    Changer de compte
-                  </Button>
-                </Link>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert className="border-blue-200 bg-blue-50">
-              <UserX className="h-4 w-4" />
-              <AlertDescription className="text-blue-800">
-                Vous effectuez un achat en tant qu'invité.{" "}
-                <Link href="/auth">
-                  <Button variant="link" className="p-0 h-auto text-blue-700 underline">
-                    Se connecter
-                  </Button>
-                </Link>{" "}
-                pour un suivi de vos achats.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -398,46 +358,28 @@ export default function CheckoutPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="country"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Pays *</FormLabel>
-                        <Select 
-                          onValueChange={(value) => {
-                            console.log("Country selected:", value)
-                            field.onChange(value)
-                          }} 
-                          value={field.value}
-                          key={field.value} // Force re-render when value changes
-                        >
+                        <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
-                          <SelectTrigger 
-                              className={formErrors.country ? "border-red-500" : ""}
-                              onTouchStart={(e) => e.stopPropagation()} // Prevent touch conflicts on mobile
-                            >
-                              <SelectValue placeholder="Sélectionnez votre pays" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionnez un pays" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent 
-                            className="z-50 bg-white border shadow-lg"
-                            position="popper"
-                            sideOffset={5}
-                          >
+                          <SelectContent>
                             {countries.map((country) => (
-                              <SelectItem 
-                              key={country} 
-                              value={country}
-                              className="cursor-pointer hover:bg-gray-100"
-                            >
+                              <SelectItem key={country} value={country}>
                                 {country}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        {formErrors.country && <FormMessage className="text-red-500">{formErrors.country}</FormMessage>}
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -449,13 +391,9 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Ville *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Votre ville"
-                            {...field}
-                            className={formErrors.city ? "border-red-500" : ""}
-                          />
+                          <Input placeholder="Votre ville" {...field} />
                         </FormControl>
-                        {formErrors.city && <FormMessage className="text-red-500">{formErrors.city}</FormMessage>}
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -490,5 +428,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
