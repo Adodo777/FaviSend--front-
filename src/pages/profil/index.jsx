@@ -1,30 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Icons } from "@/assets/icons";
 import { useLocation } from "wouter";
+
+// Chargement dynamique des composants
+const AvatarSection = lazy(() => import("./AvatarSection"));
+const FormSection = lazy(() => import("./FormSection"));
 
 export default function Profile() {
   const { user, updateUser, isLoading } = useAuth();
@@ -32,7 +19,7 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [photoURL, setPhotoURL] = useState("");
-  const [isFormReady, setIsFormReady] = useState(false); // Nouvel état pour différer le remplissage
+  const [isFormReady, setIsFormReady] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -68,7 +55,7 @@ export default function Profile() {
         displayName: user.displayName || "",
         phone: user.phone || "",
       });
-      setIsFormReady(true); // Marque le formulaire comme prêt
+      setIsFormReady(true);
     }
   }, [user, form, isEditing]);
 
@@ -111,7 +98,7 @@ export default function Profile() {
     console.log("Fichier sélectionné :", file);
 
     const formData = new FormData();
-    formData.append("file", file); // Utilisez "file" comme clé, comme dans UploadForm.jsx
+    formData.append("file", file);
     formData.append("userId", user.id);
 
     try {
@@ -119,7 +106,6 @@ export default function Profile() {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://backend-favisend.onrender.com/api/user/upload-photo", true);
 
-        // Ajouter le token d'authentification
         const token = localStorage.getItem("authToken");
         if (token) {
           xhr.setRequestHeader("Authorization", `Bearer ${token}`);
@@ -169,301 +155,52 @@ export default function Profile() {
     }
   }, [user, toast]);
 
-  // Affichage du loader pendant le chargement
-  if (isLoading || !isFormReady) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin mb-4">
-            <Icons.loader className="h-12 w-12 text-blue-600 mx-auto" />
-          </div>
-          <p className="text-gray-600">Chargement de votre profil...</p>
-        </div>
+  // Loader rapide pour les transitions
+  const Loader = () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <Icons.loader className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Chargement...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  // Affichage si l'utilisateur n'est pas défini
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-2">Redirection en cours...</p>
-          <div className="animate-pulse text-sm text-gray-400">
-            Vous devez être connecté pour accéder à cette page
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Rendu principal
+  // Affichage principal
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-20 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation("/")}
-              className="mb-4 hover:bg-gray-100"
-            >
-              <Icons.arrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'accueil
-            </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setLocation("/")}
+            className="mb-4 hover:bg-gray-100"
+          >
+            <Icons.arrowLeft className="mr-2 h-4 w-4" />
+            Retour à l'accueil
+          </Button>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">
-              Mon compte
-            </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Mon compte</h1>
 
-            <Card className="w-full max-w-2xl mx-auto shadow-lg">
-              <CardHeader className="bg-white border-b border-gray-100">
-                <CardTitle className="text-xl sm:text-2xl text-gray-900">
-                  Profil Utilisateur
-                </CardTitle>
-                <CardDescription className="text-gray-600 text-sm">
-                  Consultez et mettez à jour vos informations personnelles
-                </CardDescription>
-              </CardHeader>
+          <Suspense fallback={<Loader />}>
+            <AvatarSection
+              photoURL={photoURL}
+              user={user}
+              isEditing={isEditing}
+              handlePhotoUpload={handlePhotoUpload}
+            />
+          </Suspense>
 
-              <CardContent className="bg-white p-4 sm:p-6">
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col items-center space-y-4 w-full">
-                    <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-gray-200">
-                      <AvatarImage
-                        src={photoURL || undefined}
-                        alt={user?.displayName || user?.username || "Utilisateur"}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-lg sm:text-xl font-semibold">
-                        {user?.displayName?.charAt(0)?.toUpperCase() ||
-                          user?.username?.charAt(0)?.toUpperCase() ||
-                          user?.email?.charAt(0)?.toUpperCase() ||
-                          "U"}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="text-center space-y-2 w-full">
-                      <p className="font-semibold text-gray-900 text-base sm:text-lg">
-                        {user?.displayName || user?.username || "Utilisateur"}
-                      </p>
-                      <p className="text-sm text-gray-600 break-all">
-                        {user?.email || "Email non défini"}
-                      </p>
-                      {user?.balance !== undefined && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border max-w-xs mx-auto">
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">
-                            Solde
-                          </p>
-                          <p className="font-bold text-lg text-green-600">
-                            {user.balance.toFixed(2)} €
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {isEditing && (
-                      <div className="w-full max-w-sm">
-                        <label
-                          htmlFor="profile-photo"
-                          className="block text-center text-sm font-medium text-gray-700 mb-2"
-                        >
-                          Modifier la photo
-                        </label>
-                        <Input
-                          id="profile-photo"
-                          type="file"
-                          accept="image/*"
-                          className="text-sm w-full"
-                          onChange={handlePhotoUpload}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="w-full">
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(handleSubmit)}
-                        className="space-y-4"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-gray-700 text-sm font-medium">
-                                  Prénom
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    disabled={!isEditing}
-                                    placeholder="Votre prénom"
-                                    className={`transition-colors duration-200 ${
-                                      !isEditing
-                                        ? "bg-gray-50 text-gray-600 border-gray-200"
-                                        : "bg-white border-gray-300 focus:border-blue-500"
-                                    }`}
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-gray-700 text-sm font-medium">
-                                  Nom
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    disabled={!isEditing}
-                                    placeholder="Votre nom"
-                                    className={`transition-colors duration-200 ${
-                                      !isEditing
-                                        ? "bg-gray-50 text-gray-600 border-gray-200"
-                                        : "bg-white border-gray-300 focus:border-blue-500"
-                                    }`}
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name="displayName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 text-sm font-medium">
-                                Nom d'affichage
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditing}
-                                  placeholder="Nom affiché publiquement"
-                                  className={`transition-colors duration-200 ${
-                                    !isEditing
-                                      ? "bg-gray-50 text-gray-600 border-gray-200"
-                                      : "bg-white border-gray-300 focus:border-blue-500"
-                                  }`}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-xs" />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 text-sm font-medium">
-                                Nom d'utilisateur
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditing}
-                                  placeholder="Nom d'utilisateur unique"
-                                  className={`transition-colors duration-200 ${
-                                    !isEditing
-                                      ? "bg-gray-50 text-gray-600 border-gray-200"
-                                      : "bg-white border-gray-300 focus:border-blue-500"
-                                  }`}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-xs" />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 text-sm font-medium">
-                                Téléphone
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditing}
-                                  placeholder="Votre numéro de téléphone"
-                                  className={`transition-colors duration-200 ${
-                                    !isEditing
-                                      ? "bg-gray-50 text-gray-600 border-gray-200"
-                                      : "bg-white border-gray-300 focus:border-blue-500"
-                                  }`}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-xs" />
-                            </FormItem>
-                          )}
-                        />
-
-                        {isEditing && (
-                          <div className="pt-4">
-                            <Button
-                              type="submit"
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
-                              disabled={updateProfileMutation.isLoading}
-                            >
-                              {updateProfileMutation.isLoading ? (
-                                <>
-                                  <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
-                                  Mise à jour en cours...
-                                </>
-                              ) : (
-                                <>
-                                  <Icons.save className="mr-2 h-4 w-4" />
-                                  Enregistrer les modifications
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                      </form>
-                    </Form>
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter className="bg-gray-50 border-t border-gray-100 p-4 sm:p-6">
-                <div className="w-full flex justify-center sm:justify-end">
-                  {!isEditing ? (
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
-                    >
-                      <Icons.pencil className="mr-2 h-4 w-4" />
-                      Modifier le profil
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditing(false)}
-                      className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50 font-medium px-6 py-2"
-                    >
-                      <Icons.x className="mr-2 h-4 w-4" />
-                      Annuler
-                    </Button>
-                  )}
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
+          {isFormReady && (
+            <Suspense fallback={<Loader />}>
+              <FormSection
+                form={form}
+                isEditing={isEditing}
+                handleSubmit={handleSubmit}
+                setIsEditing={setIsEditing}
+                updateProfileMutation={updateProfileMutation}
+              />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>
