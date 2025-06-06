@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Icons } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,6 @@ import { fr } from "date-fns/locale";
 
 export default function FileDetail({ file }) {
   const [copied, setCopied] = useState(false);
-  const isMounted = useRef(true);
 
   const onCheckout = () => {
     //navigate to checkout page with file details
@@ -56,30 +55,29 @@ export default function FileDetail({ file }) {
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
 
-  useEffect(() => {
-    return () => {
-      isMounted.current = false; // Marque le composant comme démonté
-    };
-  }, []);
-
-  const copyShareLink = async () => {
+  const copyShareLink = () => {
     try {
-      if (!navigator.clipboard) {
-        throw new Error("L'API Clipboard n'est pas disponible sur ce navigateur.");
-      }
-
-      await navigator.clipboard.writeText(`${window.location.origin}/file/${file.id}`);
-      if (isMounted.current) {
-        setCopied(true);
-      }
-
-      setTimeout(() => {
-        if (isMounted.current) {
-          setCopied(false);
-        }
-      }, 2000);
+      const shareLink = `${window.location.origin}/file/${file.id}`;
+      
+      // Crée un élément <textarea> temporaire
+      const textarea = document.createElement("textarea");
+      textarea.value = shareLink;
+      textarea.style.position = "fixed"; // Évite les sauts de page
+      textarea.style.opacity = "0"; // Rendre invisible
+      document.body.appendChild(textarea);
+  
+      // Sélectionne et copie le texte
+      textarea.select();
+      document.execCommand("copy");
+  
+      // Supprime l'élément <textarea>
+      document.body.removeChild(textarea);
+  
+      // Met à jour l'état pour afficher "Lien copié"
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Erreur lors de la copie :', err);
+      console.error("Erreur lors de la copie :", err);
       alert("Impossible de copier automatiquement. Veuillez copier manuellement : " + `${window.location.origin}/file/${file.id}`);
     }
   };
