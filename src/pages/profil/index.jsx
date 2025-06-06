@@ -101,45 +101,73 @@ export default function Profile() {
     [updateProfileMutation]
   );
 
-  const handlePhotoUpload = useCallback(
-    async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      console.log("Fichier sélectionné :", file);
+  const handlePhotoUpload = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      console.error("Aucun fichier sélectionné.");
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("photo", file);
+    console.log("Fichier sélectionné :", file);
 
-      try {
-        const data = await apiRequest(
-          "POST",
-          `/api/user/upload-photo/${user.id}`,
-          formData,
-          {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          }
-        );
+    const formData = new FormData();
+    formData.append("file", file); // Utilisez "file" comme clé, comme dans UploadForm.jsx
+    formData.append("userId", user.id);
 
-        if (!data.photoURL) {
-          throw new Error("L'URL de la photo est manquante dans la réponse.");
+    try {
+      const response = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "https://backend-favisend.onrender.com/api/user/upload-photo", true);
+
+        // Ajouter le token d'authentification
+        const token = localStorage.getItem("authToken");
+        if (token) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         }
 
-        setPhotoURL(data.photoURL);
-        toast({
-          title: "Photo téléchargée",
-          description: "Votre photo de profil a été mise à jour.",
-        });
-      } catch (error) {
-        console.error("Erreur lors du téléchargement de la photo :", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: `Impossible de télécharger la photo : ${error.message || error}`,
-        });
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            console.log(`Progression de l'upload : ${progress}%`);
+          }
+        };
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } else {
+            reject(new Error(xhr.responseText));
+          }
+        };
+
+        xhr.onerror = function () {
+          reject(new Error("Erreur lors de l'upload."));
+        };
+
+        xhr.send(formData);
+      });
+
+      console.log("Réponse du backend :", response);
+
+      if (!response.photoURL) {
+        throw new Error("L'URL de la photo est manquante dans la réponse.");
       }
-    },
-    [user, toast]
-  );
+
+      setPhotoURL(response.photoURL);
+      toast({
+        title: "Photo téléchargée",
+        description: "Votre photo de profil a été mise à jour.",
+      });
+    } catch (error) {
+      console.error("Erreur lors du téléchargement de la photo :", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: `Impossible de télécharger la photo : ${error.message || error}`,
+      });
+    }
+  }, [user, toast]);
 
   // Affichage du loader pendant le chargement
   if (isLoading || !isFormReady) {
