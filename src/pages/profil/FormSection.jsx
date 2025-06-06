@@ -125,10 +125,10 @@ export default function FormSection({ form, isEditing, handleSubmit, setIsEditin
           />
 
           {isEditing && (
-            <div className="pt-4">
+            <div className="pt-4 flex flex-col sm:flex-row gap-4">
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5"
                 disabled={updateProfileMutation.isLoading}
               >
                 {updateProfileMutation.isLoading ? (
@@ -142,6 +142,18 @@ export default function FormSection({ form, isEditing, handleSubmit, setIsEditin
                     Enregistrer les modifications
                   </>
                 )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5"
+                onClick={() => {
+                  form.reset(); // Réinitialiser le formulaire avec les valeurs par défaut
+                  setIsEditing(false); // Désactiver le mode édition
+                }}
+              >
+                <Icons.x className="mr-2 h-4 w-4" />
+                Annuler
               </Button>
             </div>
           )}
