@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -21,13 +21,14 @@ export default function File() {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [localComments, setLocalComments] = useState([]);
   const fileId = params?.id;
 
   const {
     data: fileData,
     isLoading,
     error,
-    refetch, // Utilisation de refetch pour recharger les données
+    refetch,
   } = useQuery({
     queryKey: [`/api/files/detail/${fileId}`],
     queryFn: async () => {
@@ -35,16 +36,18 @@ export default function File() {
       return response;
     },
     enabled: !!fileId,
+    onSuccess: (data) => {
+      setLocalComments(data.comments || []); // Mettre à jour les commentaires localement
+    },
   });
 
-  // Fonction async pour publier un commentaire
   const publishComment = useCallback(
     async (commentData) => {
       try {
-        await apiRequest("POST", `/api/files/comment/${user.id}`, commentData);
+        const newComment = await apiRequest("POST", `/api/files/comment/${user.id}`, commentData);
 
-        // Utiliser refetch pour recharger les données après la publication
-        await refetch();
+        // Ajouter le commentaire localement sans attendre `refetch`
+        setLocalComments((prevComments) => [newComment, ...prevComments]);
 
         setComment("");
         setRating(0);
@@ -62,7 +65,7 @@ export default function File() {
         });
       }
     },
-    [refetch, toast, user]
+    [toast, user]
   );
 
   const commentMutation = useMutation({
@@ -72,7 +75,6 @@ export default function File() {
     },
   });
 
-  // Gestion des erreurs de fichier
   useEffect(() => {
     if (error) {
       toast({
@@ -84,7 +86,6 @@ export default function File() {
     }
   }, [error, toast, setLocation]);
 
-  // Fonction pour rediriger vers le checkout
   const handleCheckout = useCallback(() => {
     setLocation(`/checkout/${fileId}`);
   }, [fileId, setLocation]);
@@ -101,7 +102,6 @@ export default function File() {
           rating,
         });
       } else {
-        // Rediriger vers la page d'authentification
         toast({
           title: "Connexion requise",
           description: "Vous devez être connecté pour laisser un commentaire.",
@@ -111,6 +111,48 @@ export default function File() {
     },
     [fileData, comment, rating, user, commentMutation, toast, setLocation]
   );
+
+  const MemoizedCommentList = useMemo(() => {
+    return localComments.map((comment) => (
+      <Card key={comment._id} className="overflow-hidden">
+        <CardContent className="p-4">
+          <div className="flex items-start">
+            <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
+              <AvatarImage
+                src={
+                  comment.userId?.photoURL ||
+                  "https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ="
+                }
+                alt={comment.userId?.displayName || "Utilisateur"}
+              />
+              <AvatarFallback>
+                {comment.userId?.displayName?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h4 className="font-medium text-sm truncate">
+                  {comment.userId?.displayName || comment.userId?.username || "Utilisateur"}
+                </h4>
+                <span className="text-xs text-gray-500 flex-shrink-0">
+                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: fr })}
+                </span>
+              </div>
+              <div className="flex mt-1 mb-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Icons.starFill
+                    key={i}
+                    className={`h-4 w-4 ${i < comment.rating ? "text-yellow-400" : "text-gray-200"}`}
+                  />
+                ))}
+              </div>
+              <p className="text-gray-700 text-sm break-words">{comment.comment}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ));
+  }, [localComments]);
 
   // Loading state optimisé pour mobile
   if (isLoading) {
@@ -186,9 +228,7 @@ export default function File() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={
-                    !comment.trim() || rating === 0 || commentMutation.isPending
-                  }
+                  disabled={!comment.trim() || rating === 0 || commentMutation.isPending}
                   className="w-full md:w-auto"
                 >
                   {commentMutation.isPending ? (
@@ -208,59 +248,8 @@ export default function File() {
           </Card>
 
           {/* Comments list */}
-          {fileData.comments && fileData.comments.length > 0 ? (
-            <div className="space-y-4">
-              {fileData.comments.map((comment) => (
-                <Card key={comment._id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start">
-                      <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
-                        <AvatarImage
-                          src={
-                            comment.userId?.photoURL ||
-                            "https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ="
-                          }
-                          alt={comment.userId?.displayName || "Utilisateur"}
-                        />
-                        <AvatarFallback>
-                          {comment.userId?.displayName?.charAt(0).toUpperCase() ||
-                            "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <h4 className="font-medium text-sm truncate">
-                            {comment.userId?.displayName ||
-                              comment.userId?.username ||
-                              "Utilisateur"}
-                          </h4>
-                          <span className="text-xs text-gray-500 flex-shrink-0">
-                            {formatDistanceToNow(
-                              new Date(comment.createdAt),
-                              { addSuffix: true, locale: fr }
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex mt-1 mb-2">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Icons.starFill
-                              key={i}
-                              className={`h-4 w-4 ${i < comment.rating
-                                  ? "text-yellow-400"
-                                  : "text-gray-200"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-gray-700 text-sm break-words">
-                          {comment.comment}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {localComments.length > 0 ? (
+            <div className="space-y-4">{MemoizedCommentList}</div>
           ) : (
             <Card>
               <CardContent className="p-6 text-center">
