@@ -7,8 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export default function FileDetail({ file, onCheckout }) {
+export default function FileDetail({ file }) {
   const [copied, setCopied] = useState(false);
+  const onCheckout = () => {
+    //navigate to checkout page with file details
+    window.location.href = `/checkout/${file.id}`;
+  };
 
   // Fonction pour calculer la note moyenne
   const calculateAverageRating = (comments) => {

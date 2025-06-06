@@ -5,6 +5,7 @@ import { useRoute, useLocation } from "wouter"
 import { useQuery } from "@tanstack/react-query"
 import { apiRequest } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
+import { Icons } from "@/assets/icons"
 import Loader from "@/components/Loader"
 
 // Chargement dynamique des sous-composants
