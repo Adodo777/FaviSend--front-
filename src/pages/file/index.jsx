@@ -38,6 +38,7 @@ export default function File() {
     },
     enabled: !!fileId,
     onSuccess: (data) => {
+      console.log("Données du fichier :", data);
       setLocalComments(data.comments || []);
     },
   });
@@ -100,6 +101,10 @@ export default function File() {
       setLocation("/explore");
     }
   }, [error, toast, setLocation]);
+
+  useEffect(() => {
+    console.log("Commentaires locaux :", localComments);
+  }, [localComments]);
 
   if (isLoading) {
     return (
