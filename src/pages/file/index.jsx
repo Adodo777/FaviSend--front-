@@ -25,6 +25,7 @@ export default function File() {
 
   const [localComments, setLocalComments] = useState([]);
   const [hoverRating, setHoverRating] = useState(0);
+  const [isCommentsInitialized, setIsCommentsInitialized] = useState(false);
 
   const {
     data: fileData,
@@ -36,11 +37,7 @@ export default function File() {
       const response = await apiRequest("GET", `/api/files/detail/${fileId}`);
       return response;
     },
-    enabled: !!fileId,
-    onSuccess: (data) => {
-      console.log("Données du fichier :", data);
-      setLocalComments(data.comments || []);
-    },
+    enabled: !!fileId
   });
 
   const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -103,8 +100,12 @@ export default function File() {
   }, [error, toast, setLocation]);
 
   useEffect(() => {
-    console.log("Commentaires locaux :", localComments);
-  }, [localComments]);
+    if (fileData && fileData.comments && !isCommentsInitialized) {
+      console.log("Initialisation des commentaires locaux :", fileData.comments);
+      setLocalComments(fileData.comments);
+      setIsCommentsInitialized(true); // Marque les commentaires comme initialisés
+    }
+  }, [fileData, isCommentsInitialized]);
 
   if (isLoading) {
     return (
