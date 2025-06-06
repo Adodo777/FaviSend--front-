@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -94,46 +94,52 @@ export default function Profile() {
     },
   });
 
-  const handleSubmit = (formData) => {
-    updateProfileMutation.mutate(formData);
-  };
+  const handleSubmit = useCallback(
+    (formData) => {
+      updateProfileMutation.mutate(formData);
+    },
+    [updateProfileMutation]
+  );
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    console.log("Fichier sélectionné :", file);
+  const handlePhotoUpload = useCallback(
+    async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      console.log("Fichier sélectionné :", file);
 
-    const formData = new FormData();
-    formData.append("photo", file);
+      const formData = new FormData();
+      formData.append("photo", file);
 
-    try {
-      const data = await apiRequest(
-        "POST",
-        `/api/user/upload-photo/${user.id}`,
-        formData,
-        {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      try {
+        const data = await apiRequest(
+          "POST",
+          `/api/user/upload-photo/${user.id}`,
+          formData,
+          {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          }
+        );
+
+        if (!data.photoURL) {
+          throw new Error("L'URL de la photo est manquante dans la réponse.");
         }
-      );
 
-      if (!data.photoURL) {
-        throw new Error("L'URL de la photo est manquante dans la réponse.");
+        setPhotoURL(data.photoURL);
+        toast({
+          title: "Photo téléchargée",
+          description: "Votre photo de profil a été mise à jour.",
+        });
+      } catch (error) {
+        console.error("Erreur lors du téléchargement de la photo :", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: `Impossible de télécharger la photo : ${error.message || error}`,
+        });
       }
-
-      setPhotoURL(data.photoURL);
-      toast({
-        title: "Photo téléchargée",
-        description: "Votre photo de profil a été mise à jour.",
-      });
-    } catch (error) {
-      console.error("Erreur lors du téléchargement de la photo :", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: `Impossible de télécharger la photo : ${error.message || error}`,
-      });
-    }
-  };
+    },
+    [user, toast]
+  );
 
   // Affichage du loader pendant le chargement
   if (isLoading || !isFormReady) {
