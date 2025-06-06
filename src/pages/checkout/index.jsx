@@ -365,13 +365,10 @@ export default function CheckoutPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Pays *</FormLabel>
-                        <Select
-                          value={field.value || undefined} // Assurez-vous que la valeur est toujours une chaîne ou undefined
-                          onValueChange={(value) => field.onChange(value)} // Synchronisez correctement la valeur
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Sélectionnez un pays" />
+                              <SelectValue placeholder="Sélectionnez votre pays" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -382,12 +379,14 @@ export default function CheckoutPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
                         {formErrors.country && (
-                          <FormMessage className="text-red-500">{formErrors.country}</FormMessage>
+                          <p className="text-red-500 text-sm mt-1">{formErrors.country}</p>
                         )}
                       </FormItem>
                     )}
                   />
+
 
                   <FormField
                     control={form.control}
