@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -14,8 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import FileDetail from "@/components/FileDetail";
 
+const FileDetail = lazy(() => import("@/components/FileDetail"))
 export default function File() {
   const [, params] = useRoute("/file/:id");
   const [, setLocation] = useLocation();
@@ -122,6 +122,15 @@ export default function File() {
 
   if (!fileData) return null;
 
+  const Loader = () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <Icons.loader className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Chargement...</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="pt-20 pb-16 bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -130,7 +139,9 @@ export default function File() {
             <Icons.arrowLeft className="mr-2 h-4 w-4" /> Retour à l'exploration
           </Button>
 
-          <FileDetail file={fileData} />
+          <Suspense fallback={<Loader />}>
+            <FileDetail file={fileData} />
+          </Suspense>
         </div>
 
         {/* Comments section */}
