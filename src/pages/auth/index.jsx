@@ -89,7 +89,7 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-[80vh] w-full">
       {/* Left Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 pt-[100px]">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
@@ -109,11 +109,11 @@ export default function AuthPage() {
             {isLogin ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Nom d'utilisateur</Label>
+                  <Label htmlFor="username">Email</Label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder="votre_adress_mail"
+                    placeholder="monadresse@mail.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient"
 import { Link } from "wouter"
 
 export default function PaymentVerificationPage() {
-    
+
     const searchParams = new URLSearchParams(window.location.search)
     const paymentId = searchParams.get("paymentId")
 
@@ -24,7 +23,7 @@ export default function PaymentVerificationPage() {
         retry: 3,
         retryDelay: 2000,
     })
-    
+
     if (!paymentId) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-6">
@@ -85,7 +84,7 @@ export default function PaymentVerificationPage() {
                                 {paymentData.buyerEmail}
                             </AlertDescription>
                         </Alert>
-    
+
                         <div className="space-y-4 text-center">
                             <p className="text-gray-700 mb-4">
                                 Vous pouvez accéder à vos achats via la page dédiée.
@@ -96,7 +95,7 @@ export default function PaymentVerificationPage() {
                                 </Button>
                             </Link>
                         </div>
-    
+
                         <div className="text-center pt-4">
                             <Link href="/explore">
                                 <Button variant="outline">Continuer l'exploration</Button>

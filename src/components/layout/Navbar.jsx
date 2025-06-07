@@ -21,7 +21,11 @@ export default function Navbar() {
   // Gestion des clics en dehors du menu
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        !event.target.closest(".hamburger-button")
+      ) {
         setMobileMenuOpen(false); // Fermer le menu si on clique en dehors
       }
     };
@@ -36,6 +40,7 @@ export default function Navbar() {
     <nav className="bg-white shadow-sm fixed w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
               <Icons.logo className="text-primary text-2xl mr-2" />
@@ -43,6 +48,7 @@ export default function Navbar() {
             </Link>
           </div>
 
+          {/* Menu desktop */}
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/explore" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors">
               Explorer
@@ -78,38 +84,39 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/auth">
-                <Button 
-                  variant="outline" 
-                  className="px-4 py-2 rounded-md bg-white text-primary border border-primary font-medium text-sm hover:bg-primary/5 transition-colors"
-                >
-                  Se connecter
-                </Button>
-              </Link>
+                  <Button 
+                    variant="outline" 
+                    className="px-4 py-2 rounded-md bg-white text-primary border border-primary font-medium text-sm hover:bg-primary/5 transition-colors"
+                  >
+                    Se connecter
+                  </Button>
+                </Link>
                 
-              <Link href="/auth?register=true">
-                <Button
-                  className="px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
-                >
-                  S'inscrire
-                </Button>
-              </Link>
+                <Link href="/auth?register=true">
+                  <Button
+                    className="px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
+                  >
+                    S'inscrire
+                  </Button>
+                </Link>
               </>
             )}
           </div>
 
+          {/* Bouton hamburger pour mobile */}
           <div className="flex md:hidden items-center">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="hamburger-button inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
-              <Icons.menu className="text-xl" />
+              {mobileMenuOpen ? <Icons.x className="text-xl" /> : <Icons.menu className="text-xl" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Menu mobile */}
       <div ref={menuRef} className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1">
           <Link href="/explore" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">

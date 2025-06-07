@@ -229,9 +229,8 @@ export default function File() {
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Icons.starFill
                               key={i}
-                              className={`h-4 w-4 ${
-                                i < comment.rating ? "text-yellow-400" : "text-gray-200"
-                              }`}
+                              className={`h-4 w-4 ${i < comment.rating ? "text-yellow-400" : "text-gray-200"
+                                }`}
                             />
                           ))}
                         </div>

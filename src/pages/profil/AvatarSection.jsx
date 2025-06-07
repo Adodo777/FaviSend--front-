@@ -1,6 +1,5 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export default function AvatarSection({ photoURL, user, isEditing, handlePhotoUpload }) {
   return (

@@ -10,7 +10,6 @@ import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
 const FileDetail = React.memo(({ file }) => {
-  // const [copied, setCopied] = useState(false);
 
   const [copyingId, setCopyingId] = useState(null);
   const { toast } = useToast();
@@ -35,11 +34,11 @@ const FileDetail = React.memo(({ file }) => {
     if (fileType.includes('image')) return <Icons.fileImage className="text-blue-600 h-12 w-12" />;
     if (fileType.includes('audio')) return <Icons.fileAudio className="text-blue-600 h-12 w-12" />;
     if (fileType.includes('video')) return <Icons.fileVideo className="text-red-600 h-12 w-12" />;
-    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar')) 
+    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar'))
       return <Icons.fileArchive className="text-amber-600 h-12 w-12" />;
-    if (fileType.includes('excel') || fileType.includes('spreadsheet')) 
+    if (fileType.includes('excel') || fileType.includes('spreadsheet'))
       return <Icons.fileSpreadsheet className="text-green-600 h-12 w-12" />;
-    if (fileType.includes('word') || fileType.includes('document')) 
+    if (fileType.includes('word') || fileType.includes('document'))
       return <Icons.fileText className="text-blue-600 h-12 w-12" />;
     return <Icons.file className="text-gray-500 h-12 w-12" />;
   };
@@ -49,26 +48,16 @@ const FileDetail = React.memo(({ file }) => {
     if (fileType.includes('image')) return 'bg-blue-50';
     if (fileType.includes('audio')) return 'bg-blue-50';
     if (fileType.includes('video')) return 'bg-red-50';
-    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar')) 
+    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar'))
       return 'bg-amber-50';
-    if (fileType.includes('excel') || fileType.includes('spreadsheet')) 
+    if (fileType.includes('excel') || fileType.includes('spreadsheet'))
       return 'bg-green-50';
-    if (fileType.includes('word') || fileType.includes('document')) 
+    if (fileType.includes('word') || fileType.includes('document'))
       return 'bg-blue-50';
     return 'bg-gray-50';
   };
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
-
-  // const copyShareLink = async () => {
-  //   try {
-  //     await navigator.clipboard.writeText(`${window.location.origin}/file/${file.id}`);
-  //     setCopied(true);
-  //     setTimeout(() => setCopied(false), 2000);
-  //   } catch (err) {
-  //     console.error('Failed to copy: ', err);
-  //   }
-  // };
 
   const copyToClipboard = async (fileId) => {
     setCopyingId(fileId);
@@ -97,7 +86,7 @@ const FileDetail = React.memo(({ file }) => {
           <div className={`${getBgColorClass(file.fileType)} p-8 rounded-xl flex items-center justify-center`}>
             {getFileIcon(file.fileType)}
           </div>
-          
+
           <div className="flex-1">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h1 className="text-2xl font-heading font-bold">{file.title}</h1>
@@ -105,7 +94,7 @@ const FileDetail = React.memo(({ file }) => {
                 {extension}
               </Badge>
             </div>
-            
+
             {/* User info */}
             <div className="flex items-center mt-2 mb-4">
               <Avatar className="h-6 w-6 mr-2">
@@ -122,12 +111,12 @@ const FileDetail = React.memo(({ file }) => {
                 )}
               </span>
             </div>
-            
+
             {/* Description */}
             {file.description && (
               <p className="text-gray-700 mb-4">{file.description}</p>
             )}
-            
+
             {/* File metadata */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -157,7 +146,7 @@ const FileDetail = React.memo(({ file }) => {
                 <p className="font-medium">{file.comments?.length || 0}</p>
               </div>
             </div>
-            
+
             {/* Tags */}
             {file.tags && file.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
@@ -168,18 +157,18 @@ const FileDetail = React.memo(({ file }) => {
                 ))}
               </div>
             )}
-            
+
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <Button 
-                className="flex-1 sm:py-2"
+              <Button
+                className="flex-1 py-[10px] sm:py-2"
                 size="lg"
                 onClick={onCheckout}
               >
-                  <Icons.download className="mr-2 h-5 w-5" />
-                  Acheter et télécharger   
+                <Icons.download className="mr-2 h-5 w-5" />
+                Acheter et télécharger
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="lg"
@@ -206,5 +195,3 @@ const FileDetail = React.memo(({ file }) => {
 });
 
 export default FileDetail;
-
-

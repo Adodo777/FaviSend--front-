@@ -62,9 +62,9 @@ export default function Features() {
             <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center mb-4">
               <span className="text-accent font-heading font-bold text-xl">3</span>
             </div>
-            <h3 className="text-xl font-heading font-semibold mb-2">Gagnez 500F par téléchargement</h3>
+            <h3 className="text-xl font-heading font-semibold mb-2">Gagnez à partir de 500F par téléchargement</h3>
             <p className="text-gray-600">
-              À chaque téléchargement, vous recevez 450F CFA directement sur votre compte.
+              À chaque téléchargement, vous recevez à partir de 450F CFA directement sur votre compte.
             </p>
             <div className="mt-4 flex items-center text-sm text-accent font-medium">
               <Icons.money className="mr-2" />

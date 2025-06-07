@@ -14,7 +14,6 @@ export default function Hero() {
     if (user) {
       setShowUploadForm(true);
     } else {
-      // Redirige vers la page d'authentification au lieu d'utiliser Google
       setLocation("/auth");
     }
   };
@@ -29,7 +28,7 @@ export default function Hero() {
               <span className="text-primary"> Gagnez</span> de l'argent
             </h1>
             <p className="mt-4 text-lg text-gray-600">
-              Obtenez <span className="font-semibold text-primary">500F CFA</span> à chaque fois que quelqu'un télécharge votre fichier. Simple, rapide et sans compromis.
+              Obtenez à partir de <span className="font-semibold text-primary">500F CFA</span> à chaque fois que quelqu'un télécharge votre fichier. Simple, rapide et sans compromis.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <Button 
@@ -85,6 +84,17 @@ export default function Hero() {
                         onClick={handleUploadClick}
                       />
                     </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium mb-1 text-gray-700">Prix du fichier (CFA)</label>
+                      <input 
+                        type="text" 
+                        placeholder="500" 
+                        className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+                        onClick={handleUploadClick}
+                      />
+                    </div>
+
                     <div className="flex flex-col">
                       <label className="text-sm font-medium mb-1 text-gray-700">Description (optionnelle)</label>
                       <textarea 

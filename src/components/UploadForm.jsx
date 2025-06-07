@@ -48,6 +48,9 @@ const uploadFormSchema = z.object({
   title: z.string().min(3, {
     message: "Le titre doit contenir au moins 3 caractères.",
   }),
+  price: z.number().min(500, {
+    message: "Le prix doit être d'au moins 500 FCFA.",
+  }),
   description: z.string().optional(),
   tags: z.string().optional(),
 });
@@ -65,6 +68,7 @@ export default function UploadForm({ onSuccess }) {
     resolver: zodResolver(uploadFormSchema),
     defaultValues: {
       title: "",
+      price: 500, // Prix minimum de 500 FCFA
       description: "",
       tags: "",
     },
@@ -97,26 +101,26 @@ export default function UploadForm({ onSuccess }) {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
     setFileError(null);
-    
+
     if (!selectedFile) {
       setFile(null);
       return;
     }
-    
+
     // Validate file size
     if (selectedFile.size > MAX_FILE_SIZE) {
       setFileError(`Le fichier est trop volumineux. La taille maximale est de 100MB.`);
       setFile(null);
       return;
     }
-    
+
     // Validate file type
     if (!ACCEPTED_FILE_TYPES.includes(selectedFile.type)) {
       setFileError(`Type de fichier non accepté. Les formats acceptés sont: PDF, ZIP, RAR, MP3, MP4, etc.`);
       setFile(null);
       return;
     }
-    
+
     setFile(selectedFile);
   };
 
@@ -139,25 +143,25 @@ export default function UploadForm({ onSuccess }) {
     e.preventDefault();
     e.stopPropagation();
     setFileError(null);
-    
+
     const droppedFile = e.dataTransfer.files[0];
-    
+
     if (!droppedFile) {
       return;
     }
-    
+
     // Validate file size
     if (droppedFile.size > MAX_FILE_SIZE) {
       setFileError(`Le fichier est trop volumineux. La taille maximale est de 100MB.`);
       return;
     }
-    
+
     // Validate file type
     if (!ACCEPTED_FILE_TYPES.includes(droppedFile.type)) {
       setFileError(`Type de fichier non accepté. Les formats acceptés sont: PDF, ZIP, RAR, MP3, MP4, etc.`);
       return;
     }
-    
+
     setFile(droppedFile);
   };
 
@@ -171,6 +175,7 @@ export default function UploadForm({ onSuccess }) {
     formData.append("file", file);
     formData.append("userId", user.id); // Ajouter l'ID de l'utilisateur
     formData.append("title", form.getValues("title"));
+    formData.append("price", form.getValues("price") || 500); // Prix minimum de 500 FCFA
     formData.append("description", form.getValues("description") || "");
     formData.append(
       "tags",
@@ -260,9 +265,9 @@ export default function UploadForm({ onSuccess }) {
             <FormItem>
               <FormLabel>Titre du fichier</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Ex: Guide complet du Marketing Digital" 
-                  {...field} 
+                <Input
+                  placeholder="Ex: Guide complet du Marketing Digital"
+                  {...field}
                   disabled={isUploading || saveMutation.isPending}
                 />
               </FormControl>
@@ -270,7 +275,27 @@ export default function UploadForm({ onSuccess }) {
             </FormItem>
           )}
         />
-        
+
+        <FormField
+          control={form.control}
+          name="price"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Prix du fichier (en FCFA)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="Ex: 500"
+                  {...field}
+                  min={500}
+                  disabled={isUploading || saveMutation.isPending}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="description"
@@ -278,9 +303,9 @@ export default function UploadForm({ onSuccess }) {
             <FormItem>
               <FormLabel>Description (optionnelle)</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Décrivez votre fichier..." 
-                  {...field} 
+                <Textarea
+                  placeholder="Décrivez votre fichier..."
+                  {...field}
                   rows={3}
                   disabled={isUploading || saveMutation.isPending}
                 />
@@ -289,7 +314,7 @@ export default function UploadForm({ onSuccess }) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="tags"
@@ -297,9 +322,9 @@ export default function UploadForm({ onSuccess }) {
             <FormItem>
               <FormLabel>Tags (optionnels, séparés par des virgules)</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Ex: marketing, digital, guide" 
-                  {...field} 
+                <Input
+                  placeholder="Ex: marketing, digital, guide"
+                  {...field}
                   disabled={isUploading || saveMutation.isPending}
                 />
               </FormControl>
@@ -307,7 +332,7 @@ export default function UploadForm({ onSuccess }) {
             </FormItem>
           )}
         />
-        
+
         <div>
           <p className="text-sm font-medium mb-1">Fichier</p>
           <input
@@ -323,9 +348,8 @@ export default function UploadForm({ onSuccess }) {
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer bg-gray-50 ${
-              fileError ? "border-red-500" : file ? "border-green-500" : "border-gray-200"
-            }`}
+            className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer bg-gray-50 ${fileError ? "border-red-500" : file ? "border-green-500" : "border-gray-200"
+              }`}
           >
             {file ? (
               <div className="flex flex-col items-center">
@@ -351,7 +375,7 @@ export default function UploadForm({ onSuccess }) {
           </div>
           {fileError && <p className="text-sm text-red-500 mt-1">{fileError}</p>}
         </div>
-        
+
         {isUploading && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
@@ -361,9 +385,9 @@ export default function UploadForm({ onSuccess }) {
             <Progress value={uploadProgress} max={100} />
           </div>
         )}
-        
-        <Button 
-          type="submit" 
+
+        <Button
+          type="submit"
           className="w-full"
           disabled={!file || isUploading || saveMutation.isPending}
         >

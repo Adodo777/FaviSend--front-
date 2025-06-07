@@ -110,7 +110,7 @@ export default function FileCard({ file }) {
                 className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg font-medium hover:bg-primary/90 transition-colors"
               >
                 <Icons.download className="mr-1" />
-                500F
+                { file.price ? `${file.price}F` : "500F" }
               </Button>
             </Link>
           </div>
