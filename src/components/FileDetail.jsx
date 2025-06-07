@@ -59,7 +59,7 @@ const FileDetail = React.memo(({ file }) => {
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
 
-  const copyToClipboard = async (fileId) => {
+  const copyToClipboard = React.useCallback(async (fileId) => {
     setCopyingId(fileId);
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/file/${fileId}`);
@@ -76,7 +76,7 @@ const FileDetail = React.memo(({ file }) => {
     } finally {
       setTimeout(() => setCopyingId(null), 2000);
     }
-  };
+  }, [toast]);
 
   return (
     <Card className="overflow-hidden border-0 shadow-md">
