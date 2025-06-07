@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback, Suspense, lazy } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ const LoadingFallback = () => (
 );
 
 export default function EmailVerificationPage() {
-    const navigate = useNavigate();
+    const [, navigate ] = useLocation();
     const { toast } = useToast();
     const isProcessingRef = useRef(false);
 
