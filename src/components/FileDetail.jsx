@@ -6,9 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FileDetail({ file }) {
-  const [copied, setCopied] = useState(false);
+  // const [copied, setCopied] = useState(false);
+
+  const [copyingId, setCopyingId] = useState(null);
+  const { toast } = useToast();
 
   const onCheckout = () => {
     //navigate to checkout page with file details
@@ -55,30 +59,32 @@ export default function FileDetail({ file }) {
 
   const extension = file.fileName.split('.').pop()?.toUpperCase() || 'FILE';
 
-  const copyShareLink = () => {
+  // const copyShareLink = async () => {
+  //   try {
+  //     await navigator.clipboard.writeText(`${window.location.origin}/file/${file.id}`);
+  //     setCopied(true);
+  //     setTimeout(() => setCopied(false), 2000);
+  //   } catch (err) {
+  //     console.error('Failed to copy: ', err);
+  //   }
+  // };
+
+  const copyToClipboard = async (fileId) => {
+    setCopyingId(fileId);
     try {
-      const shareLink = `${window.location.origin}/file/${file.id}`;
-      
-      // Crée un élément <textarea> temporaire
-      const textarea = document.createElement("textarea");
-      textarea.value = shareLink;
-      textarea.style.position = "fixed"; // Évite les sauts de page
-      textarea.style.opacity = "0"; // Rendre invisible
-      document.body.appendChild(textarea);
-  
-      // Sélectionne et copie le texte
-      textarea.select();
-      document.execCommand("copy");
-  
-      // Supprime l'élément <textarea>
-      document.body.removeChild(textarea);
-  
-      // Met à jour l'état pour afficher "Lien copié"
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(`${window.location.origin}/file/${fileId}`);
+      toast({
+        title: "Lien copié!",
+        description: "Le lien a été copié dans votre presse-papier.",
+      });
     } catch (err) {
-      console.error("Erreur lors de la copie :", err);
-      alert("Impossible de copier automatiquement. Veuillez copier manuellement : " + `${window.location.origin}/file/${file.id}`);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de copier le lien.",
+      });
+    } finally {
+      setTimeout(() => setCopyingId(null), 2000);
     }
   };
 
@@ -176,9 +182,9 @@ export default function FileDetail({ file }) {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={copyShareLink}
+                onClick={() => copyToClipboard(file.id)}
               >
-                {copied ? (
+                {copyingId === file.id ? (
                   <>
                     <Icons.check className="mr-2 h-5 w-5 text-green-500" />
                     Lien copié!
