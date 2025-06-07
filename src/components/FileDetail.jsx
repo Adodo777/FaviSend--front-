@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { Icons } from "@/assets/icons";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
-export default function FileDetail({ file }) {
+const FileDetail = React.memo(({ file }) => {
   // const [copied, setCopied] = useState(false);
 
   const [copyingId, setCopyingId] = useState(null);
@@ -202,4 +203,8 @@ export default function FileDetail({ file }) {
       </CardContent>
     </Card>
   );
-}
+});
+
+export default FileDetail;
+
+
